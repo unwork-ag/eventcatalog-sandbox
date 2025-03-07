@@ -1,0 +1,31 @@
+{
+  "type": "object",
+  "properties": {
+    "token": {
+      "type": "string"
+    },
+    "userDetails": {
+      "type": "object",
+      "properties": {
+        "username": {
+          "type": "string"
+        },
+        "domain": {
+          "type": "string"
+        },
+        "fullUsername": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "example": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
+    "userDetails": {
+      "username": "admin",
+      "domain": "MYCOMPANY",
+      "fullUsername": "Admin"
+    }
+  },
+  "isSchema": true
+}

@@ -1,0 +1,63 @@
+{
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "id": {
+        "type": "string"
+      },
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "productId": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "quantity": {
+              "type": "integer"
+            },
+            "price": {
+              "type": "number",
+              "format": "float"
+            }
+          },
+          "required": [
+            "productId",
+            "name",
+            "quantity",
+            "price"
+          ]
+        }
+      },
+      "status": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "shipped",
+          "delivered",
+          "canceled"
+        ]
+      },
+      "totalAmount": {
+        "type": "number",
+        "format": "float"
+      },
+      "orderDate": {
+        "type": "string",
+        "format": "date"
+      }
+    },
+    "required": [
+      "id",
+      "items",
+      "status",
+      "totalAmount",
+      "orderDate"
+    ]
+  },
+  "isSchema": true
+}

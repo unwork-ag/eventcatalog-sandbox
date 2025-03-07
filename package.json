@@ -1,0 +1,17 @@
+{
+  "name": "eventcatalog-sandbox",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "eventcatalog dev",
+    "build": "eventcatalog build",
+    "start": "eventcatalog start",
+    "preview": "eventcatalog preview",
+    "generate": "eventcatalog generate",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@eventcatalog/core": "2.28.3",
+    "@eventcatalog/generator-openapi": "4.0.6"
+  }
+}

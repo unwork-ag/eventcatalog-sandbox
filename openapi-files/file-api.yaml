@@ -1,0 +1,5213 @@
+openapi: 3.0.1
+info:
+  title: OpenLab SDMS REST API for versioned file store
+  description: ''
+  version: "1.0-oas3"
+servers:
+  - url: ''
+tags:
+  - name: content
+  - name: authentication
+  - name: storageconfiguration
+  - name: movecopy
+  - name: versionfeature
+  - name: storagemanagement
+  - name: lock
+  - name: rekey
+  - name: esign
+  - name: comments
+  - name: automaticlock
+paths:
+  /openlab/sdms/authentication/v1.0/login:
+    post:
+      tags:
+        - authentication
+      summary: Retrieve a token either by credentials or SharedServices token
+      description: Application specific authentication endpoint to request token.
+      operationId: getBearer
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: User name or any identifier
+                password:
+                  type: string
+                  description: Hashed password (bcrypt is preferable)
+                additionalParameters:
+                  type: string
+                  description: Additional parameters to authenticate.
+            examples:
+              credentials:
+                value:
+                  username: Joe
+                  password: $2y$12$1EJxzo3RUGhMuiJsFJXLFeeO3i9Bt7W8dDheSxrscHJmut21uFZWi
+                  domain: domain.com
+                  account: account
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  userDetails:
+                    type: object
+                    properties:
+                      username:
+                        type: string
+                      domain:
+                        type: string
+                      fullUsername:
+                        type: string
+                example:
+                  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9
+                  userDetails:
+                    username: "admin"
+                    domain: "MYCOMPANY"
+                    fullUsername: "Admin"
+          headers:
+            Content-Encoding:
+              $ref: '#/components/headers/content-encoding'
+            Date:
+              $ref: '#/components/headers/date'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /openlab/sdms/authentication/v1.0/logout:
+    post:
+      tags: 
+        - authentication
+      summary: logout from this session
+      description: logout from this session.
+      operationId: logout
+      security:
+        - bearerAuth: []
+      responses:
+        '200': 
+          description: Successful operation
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /openlab/sdms/authentication/v1.0/serverinfo:
+    get:
+      tags:
+        - misc
+      summary: Retrieve server information
+      operationId: getServerInfo
+      security: []
+      responses:
+        '200':
+          description: Server information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                  productType:
+                    type: string 
+                  version:
+                    type: object
+                    properties:
+                      major: 
+                        type: string
+                      minor:
+                        type: string
+                      patch:
+                        type: string
+                      agilentStyleVersion:
+                        type: string
+                  buildNumber: 
+                    type: string
+                  domains: 
+                    type: array
+                    items: 
+                      type: string
+                  sessionTimeout:
+                     type: integer
+                  supportedFeatures:
+                    type: array
+                    items:
+                      type: string                   
+              examples:
+                SDMS:
+                  value:
+                    type: SDMS
+                    productType: SDMS
+                    version: 
+                      major: 2
+                      minor: 0
+                      patch: 0
+                    buildNumber: 2.6.0-ALPHA_2.6.0.159
+                    domains: []
+                    sessionTimeout: 10
+                    supportedFeatures : [
+                      "upload",
+                      "download",
+                      "quicksearch",
+                      "advancedsearch",
+                      "archive",
+                      "signature",
+                      "versioning",
+                      "checkin-checkout",
+                      "activitylog"
+                      ]
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /openlab/sdms/browse/v1.0/nodeurl:
+    get:
+      tags:
+        - misc
+      summary: Retrieve node information from URL
+      operationId: getIdfromUrl
+      security: []
+      parameters:      
+        - in: query
+          name: nodeRef
+          description: Parameter that accepts the Secure Storage OR ECM XT node URL info. Any one parameter value can be specified at a time.
+          required: false
+          schema:
+            type: string
+          examples: 
+            SecureStorage-nodeRef:   
+              description: Id of file or folder for Secure Storage
+              value: nodeRef=9CDD2207-E8CD-42C0-8A9E-D04581342866
+            ECMXT-nodeRef:   
+              description: Id of file or folder for ECM XT link
+              value: nodeRef=workspace://SpacesStore/245ad95c-fe35-4aa7-aff8-c35b76a0272e 
+        - in: query
+          name: sessId
+          required: false
+          schema:
+            type: string
+          description: Parameter that accepts the ECM 3x node URL info. Any one parameter value can be specified at a time.
+          examples:
+            ECM3x-SecureLink-SessId:
+              description: Handling for ECM3x link with SessID
+              value: 'SessID=19FAFAC255D9322EA02978CC79D10539E3CB325D57B13B615DBFC756DB5A404CF754E35D23711A18B'
+            ECM3x-UnSecureLink-SessId:
+              description: Handling for ECM3x link with SessID
+              value: 'SessID={9CDD2207-E8CD-42C0-8A9E-D04581342866}'
+        - in: query
+          name: sessionId
+          required: false
+          schema:
+            type: string
+          description: Parameter that accepts the ECM Web node URL info. Any one parameter value can be specified at a time.
+          examples:
+            nodeRef:
+              description: Id of file or folder for ECM web link with Sessionid
+              value: 'Sessionid={8B125245-572E-4CEF-BBA6-22CDBD735357}'
+      responses:
+        '200':
+          description: node id of latest revision even if noderef value has old revision node id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/item'
+              examples:
+                short-file-info:
+                  $ref: '#/components/examples/short-file-info-example'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /openlab/sdms/action/v1.0/items/{id}/nodeurl:
+    post:
+      tags:
+        - misc
+      security:
+        - bearerAuth: []
+      summary: Create node url using node id
+      operationId: createnodeurl
+      parameters:
+        - $ref: '#/components/parameters/id'
+      responses:
+        '201':
+          description: url generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/nodeLink'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /openlab/sdms/storageconfiguration/v1.0/storages:
+    post:
+      tags:
+        - storageconfiguration
+      summary: Add a new storage
+      description: Add a new storage configuration
+      operationId: addstorage
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+                $ref: '#/components/schemas/storageInput'
+            examples:
+                FileSystem:
+                  $ref: '#/components/examples/storage-add-filesystem'
+                AWS-NonEC2-Properties:
+                  $ref: '#/components/examples/storage-add-aws-nonec2props'
+                AWS-EC2-Properties:
+                  $ref: '#/components/examples/storage-add-aws-ec2requiredprops'
+      responses:
+        '201':
+          description: Successful operation
+          content:
+           application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+                  description: storage id
+            example: 1e3b4b70-0b88-4fb2-a48c-b2d72411147a   
+        '400':
+          $ref: '#/components/responses/BadRequestStorage'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntityAddStorage'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    get:
+      tags:
+        - storageconfiguration
+      summary: Retrieve list of all available storage configurations 
+      security:
+        - bearerAuth: []
+      operationId: getStorages
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/storage'
+              examples:
+                storages:
+                  value:
+                   - id: "3484179e-3542-4a24-b973-512e9ab23eaf"
+                     storageType: "filesystem"
+                     isPrimary: true
+                     active: true
+                     storageProperties: [
+                         {
+                             key: "location" ,
+                             value: "c:\\test"
+                         }
+                     ]
+                   - id: "8965ty34-4567-4a24-b973-512e9ab4567f"
+                     storageType: "filesystem"
+                     isPrimary: false
+                     active: true
+                     storageProperties: [
+                         {
+                             key: "location" ,
+                             value: "c:\\test2"
+                         }
+                     ]
+                   - id: "512e9ab-4a24-4567-a9e3-256e9ab45609"
+                     storageType: "aws"
+                     active: false
+                     isPrimary: false
+                     storageProperties: [
+                         {
+                             key: "location" ,
+                             value: "SDMS1"
+                         },
+                         {
+                             key: "region" ,
+                             value: "US-West-2"
+                         },
+                         {
+                             key: "bucketName" ,
+                             value: "XXXXXXXX"
+                         },
+                         {
+                             key: "isAwsEc2" ,
+                             value: "true"
+                         }
+                     ]
+                   - id: "4876636-fjhg-4a24-b973-512e9ab23678"
+                     storageType: "aws"
+                     active: false
+                     isPrimary: false
+                     storageProperties: [
+                         {
+                             key: "location" ,
+                             value: "SDMS1"
+                         },
+                         {
+                             key: "region" ,
+                             value: "US-West-2"
+                         },
+                         {
+                             key: "bucketName" ,
+                             value: "XXXXXXXX"
+                         },
+                         {
+                             key: "isAwsEc2" ,
+                             value: "false"
+                         }
+                     ]
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /openlab/sdms/storageconfiguration/v1.0/awsregions:
+    get:
+      tags:
+        - storageconfiguration
+      summary: Retrieve list of all region names for AWS S3 storage configuration
+      security:
+        - bearerAuth: []
+      operationId: getawsregions
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+              examples:
+                regions:
+                  value: >-
+                    "af-south-1": "Africa (Cape Town)",
+                    "ap-east-1": "Asia Pacific (Hong Kong)",
+                    "ap-northeast-1": "Asia Pacific (Tokyo)",
+                    "ap-northeast-2": "Asia Pacific (Seoul)",
+                    "ap-northeast-3": "Asia Pacific (Osaka)",
+                    "ap-south-1": "Asia Pacific (Mumbai)",
+                    "ap-south-2": "Asia Pacific (Hyderabad)",
+                    "ap-southeast-1": "Asia Pacific (Singapore)",
+                    "ap-southeast-2": "Asia Pacific (Sydney)",
+                    "ap-southeast-3": "Asia Pacific (Jakarta)",
+                    "ap-southeast-4": "Asia Pacific (Melbourne)",
+                    "ca-central-1": "Canada (Central)",
+                    "eu-central-1": "Europe (Frankfurt)",
+                    "eu-central-2": "Europe (Zurich)",
+                    "eu-north-1": "Europe (Stockholm)",
+                    "eu-south-1": "Europe (Milan)",
+                    "eu-south-2": "Europe (Spain)",
+                    "eu-west-1": "Europe (Ireland)",
+                    "eu-west-2": "Europe (London)",
+                    "eu-west-3": "Europe (Paris)",
+                    "me-central-1": "Middle East (UAE)",
+                    "me-south-1": "Middle East (Bahrain)",
+                    "sa-east-1": "South America (Sao Paulo)",
+                    "us-east-1": "US East (N. Virginia)",
+                    "us-east-2": "US East (Ohio)",
+                    "us-west-1": "US West (N. California)",
+                    "us-west-2": "US West (Oregon)",
+                    "cn-north-1": "China (Beijing)",
+                    "cn-northwest-1": "China (Ningxia)",
+                    "us-gov-east-1": "AWS GovCloud (US-East)",
+                    "us-gov-west-1": "AWS GovCloud (US-West)",
+                    "us-iso-east-1": "US ISO East",
+                    "us-iso-west-1": "US ISO WEST",
+                    "us-isob-east-1": "US ISOB East (Ohio)"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /openlab/sdms/storageconfiguration/v1.0/storages/{id}:
+    put:
+      tags:
+        - storageconfiguration
+      summary: Update an existing storage
+      description: Update an existing storage configuration
+      operationId: updatestorage
+      security:
+        - bearerAuth: []
+      parameters:
+          - $ref: '#/components/parameters/id'
+      requestBody:
+        content:
+          application/json:
+            schema:
+                $ref: '#/components/schemas/storageInput'
+            examples:
+                FileSystem:
+                  $ref: '#/components/examples/storage-update-filesystem'
+                AWS-NonEC2-Properties:
+                  $ref: '#/components/examples/storage-update-aws-nonec2props'
+                AWS-NonEC2-Properties-WithoutCredentialUpdate:
+                  $ref: '#/components/examples/storage-update-aws-nonec2props-nocreds'
+                AWS-EC2Required-Properties:
+                  $ref: '#/components/examples/storage-update-aws-ec2requiredprops'
+      responses:
+        '200':
+          $ref: '#/components/responses/Successful'
+        '400':
+          $ref: '#/components/responses/BadRequestStorage'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/StorageNotFound'        
+        '422':
+          $ref: '#/components/responses/UnprocessableEntityUpdateStorage'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /openlab/sdms/browse/v1.0/items/{id}:
+    get:
+      tags:
+        - content
+      summary: Retrieve the metadata for the specified file or folder
+      security:
+        - bearerAuth: []
+      operationId: getItemInfo
+      parameters:
+        - $ref: '#/components/parameters/id'
+        - in: query
+          name: path
+          description: >-
+            The path relative to the specified path `id`. To be used as a way to
+            retrieve metadata by a full path when `id` is `root`.
+          required: false
+          schema:
+            type: string
+          example: /project/results/result.ssizip
+        - $ref: '#/components/parameters/select'
+        - $ref: '#/components/parameters/idonly'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/item'
+              examples:
+                full-file-info:
+                  $ref: '#/components/examples/full-file-info-example'
+                short-file-info:
+                  $ref: '#/components/examples/short-file-info-example'
+                shortest-file-info:
+                  $ref: '#/components/examples/shortest-file-info-example'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /openlab/sdms/browse/v1.0/items/{id}/nodeexists:
+    get:
+      tags:
+        - content
+      summary: Retrieve the metadata for the specified file or folder
+      security:
+        - bearerAuth: []
+      operationId: doesnodeexists
+      parameters:
+        - $ref: '#/components/parameters/id'
+        - in: query
+          name: path
+          description: >-
+            The path relative to the specified path `id`. To be used as a way to
+            process the API by a full path when `id` is `root`.
+          required: false
+          schema:
+            type: string
+          example: /project/results/result.ssizip
+      responses:
+        '200':
+          description: Information of whether the given node exists or not
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/nodeExistsResultSchema'
+              examples:  
+                Node exists:              
+                  $ref: '#/components/examples/nodes-exists-example'
+                Node does not exist:              
+                  $ref: '#/components/examples/nodes-doesnotexists-example'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /openlab/sdms/delete/v1.0/{id}:
+    delete:
+      tags:
+        - content
+      summary: Delete the requested file or folder
+      security:
+        - bearerAuth: []
+      operationId: deleteItem
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The file or folder id to delete
+      responses:
+        '204':
+          description: The requested item has been removed
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /openlab/sdms/browse/v1.0/items/{id}/children:
+    get:
+      tags:
+        - content
+      security:
+        - bearerAuth: []
+      summary: Retrieve the list of files and folders of the requested folder
+      operationId: getItemList
+      parameters:
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+        - $ref: '#/components/parameters/orderBy'
+        - $ref: '#/components/parameters/selectNode'
+        - $ref: '#/components/parameters/filter-children'
+      responses:
+        '200':
+          $ref: '#/components/responses/nodes'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /openlab/sdms/action/v1.0/items/{id}/children:
+    post:
+      tags:
+        - content
+      security:
+        - bearerAuth: []
+      summary: Create a new folder with the specified parent folder id
+      operationId: createFolder
+      parameters:
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  properties:
+                    name:
+                      type: string
+                  example:
+                    name: New folder
+                - type: object
+                  properties:
+                    path:
+                      type: string
+                  description: Relative to specified parent folder id path
+                  example:
+                    path: /directory/sub-directory
+            example:
+              name: New folder
+      responses:
+        '201':
+          description: Folder created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/node'
+              example:
+                id: 4484179e-3542-4a24-b973-512e9ab26eaf
+        '400':
+          $ref: '#/components/responses/BadRequestAddFolder'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenAddFolder'
+        '404':
+          $ref: '#/components/responses/NotFoundAddFolder'
+        '409':
+          description: Folder already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+              example:
+                code: folderexists
+                message: >-
+                  The specified folder already exists in the specified parent
+                  folder.
+        '500':
+          $ref: '#/components/responses/InternalError'
+    put:
+      tags:
+        - content
+      security:
+        - bearerAuth: []
+      summary: Rename an existing folder with the specified folder name
+      operationId: renameFolder
+      parameters:
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/fullFolderPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+                type: string
+                example: NewFolderName
+                description: Name for the folder to be set to an existing folder.
+            example:
+                name: NewFolderName
+      responses:
+        '200':
+          description: Folder name renamed to new folder name
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/node'
+              example:
+                id: 4484179e-3542-4a24-b973-512e9ab26eaf
+        '400':
+          $ref: '#/components/responses/BadRequestAddFolder'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenAddFolder'
+        '404':
+          $ref: '#/components/responses/NotFoundAddFolder'
+        '409':
+          description: Folder already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+              example:
+                code: folderexists
+                message: >-
+                  The specified folder already exists in the specified parent
+                  folder.
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /openlab/sdms/action/v1.0/items/{id}/childrenhierarchy:
+    post:
+      tags:
+        - content
+      security:
+        - bearerAuth: []
+      summary: Creates new folder(s) based on the folder path specified. 
+      operationId: createFolderHierarchy
+      parameters:
+        - $ref: '#/components/parameters/root'
+        - in: query
+          name: fullFolderPath
+          description: >-
+            Full path of the folder that needs to be created when 'root' is specified in the id.
+          required: false
+          schema:
+            type: string
+          examples:        
+            fullPath-folder:   
+              $ref: '#/components/examples/fullPath-folderCreation'
+      responses:
+        '201':
+          description: Folder created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/node'
+              example:
+                id: 4484179e-3542-4a24-b973-512e9ab26eaf
+        '400':
+          $ref: '#/components/responses/BadRequestAddFolder'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Folder already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+              example:
+                code: FolderExists
+                message: >-
+                  The specified folder already exists in the specified parent
+                  folder.
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /openlab/sdms/action/v1.0/items/{id}/lock:
+    post:
+      tags:
+        - lock
+      security:
+        - bearerAuth: []
+      summary: lock individual files or folders. Lock folder hierarchy
+      operationId: lockfilefolder
+      parameters:
+        - name: id
+          in: path
+          description: >-
+            The unique identifier that represent an file/folder id.
+          required: true
+          schema:
+            type: string
+          examples:
+            id:
+              value: cf699839-c695-4524-8e88-082945c7b687
+        - $ref: '#/components/parameters/lockReason'
+      responses:
+        '200':
+          $ref: '#/components/responses/LockResponses' 
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /openlab/sdms/action/v1.0/items/{id}/unlock:
+    post:
+      tags:
+        - lock
+      security:
+        - bearerAuth: []
+      summary: unlock individual files or folders. Unlock folder hierarchy
+      operationId: unlockfilefolder
+      parameters:
+        - name: id
+          in: path
+          description: >-
+            The unique identifier that represent an file/folder id
+          required: true
+          schema:
+            type: string
+          examples:
+            id:
+              value: cf699839-c695-4524-8e88-082945c7b687
+        - $ref: '#/components/parameters/unlockchildren'
+        - $ref: '#/components/parameters/unlockReason'
+      responses:
+        '200':
+          $ref: '#/components/responses/UnlockResponses' 
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /openlab/sdms/content/v1.0/items/{id}/content:
+    post:
+      tags:
+        - content
+      security:
+        - bearerAuth: []
+      summary: Upload a file to the requested folder
+      description: >-
+        To avoid a request timeout the file size, network throughput and client
+        timeout settings must be taken into consideration.
+      operationId: uploadFile
+      parameters:
+        - in: path
+          name: id
+          description: Parent folder id where the file is expected to be uploaded or 'root' when folder path file is to be uploaded to the specified folder path.
+          example: 3484179e-3542-4a24-b973-512e9ab23eaf
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/reason'
+        - in: query
+          name: fullFolderPath
+          description: >-
+            Full path of the folder where the specified file is to be uploaded when 'root' is specified in the id.
+          required: false
+          schema:
+            type: string
+          examples:        
+            fullPath-folder-upload:   
+              $ref: '#/components/examples/fullPath-folder-upload'
+            fullPath-root-upload:   
+              $ref: '#/components/examples/fullPath-root-upload'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                filename:
+                  type: string
+                  description: Name to override actual file name with
+                comment:
+                  type: string
+                  description: The comment for the file upload operation. Additional detail about the upload.
+                metadata:
+                  type: string
+                  format: json
+                  description: >
+                    The additional properties for the file upload as json with details of the property name, value and data type.
+                    Each property detail should include - Name, Value and DataType information in Json format.
+                    Supported data types include - text, interger, double, boolean, json, binary and datetime
+                    Examples - 
+                      "{ Name- Prop1, Value- dummy, dataType- text }"
+                      "{ Name- Prop2, Value- 238967, dataType- integer }"
+                      "{ Name- Prop3, Value- 238967.56, dataType- double }"
+                      "{ Name- Prop4, Value- true, dataType- boolean }"
+                      "{ Name- Prop5, Value- <jsonValue>, dataType- json }"
+                      "{ Name- Prop6, Value- <binaryValue>, dataType- binary }"
+                      "{ Name- Prop7, Value- <datetimeValueInUTC>, dataType- datetime }"
+                file:
+                  type: string
+                  format: binary
+                  description: The file to upload
+      responses:
+        '201':
+          $ref: '#/components/responses/Created'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/UploadForbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/UploadConflict'
+        '500':
+          $ref: '#/components/responses/InternalErrorUpload'
+    head:
+      tags:
+        - content
+      summary: Retrieve a link to the requested resource
+      security:
+        - bearerAuth: []
+      operationId: getFileContentLink
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The unique identifier that represent a resource id
+          example: 3484179e-3542-4a24-b973-512e9ab23eaf
+        - in: header
+          name: Accept
+          schema:
+            type: string
+          description: MIME type of requested resource
+          example: application/zip
+      responses:
+        '302':
+          description: Successful operation
+          headers:
+            Location:
+              schema:
+                type: string
+              description: >-
+                Encrypted ID of the file to download, accessible without authentication, valid for short time.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    get:
+      tags:
+        - content
+      summary: 'Retrieve download link specific to the requested single/multiple file/folder Id(s) OR the latest version of the file/folder path specified.
+                Supports a mix of files & folders downloaded as zip.'
+      security:
+        - bearerAuth: []
+      operationId: getSpecificNodeDownloadLink
+      parameters:
+        - $ref: '#/components/parameters/downloadNodeId'
+        - $ref: '#/components/parameters/nodesToZip-fileandfolder'
+        - $ref: '#/components/parameters/fullFilePath'
+        - $ref: '#/components/parameters/downloadMimeType'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/downloadLink'
+              example:
+                downloadlink: 'http://localhost:52080/openlab/sdms/content/v1.0/file/054350d22c67d94804cb988cbb3de68489306f2168f1882942ecf47379807c0608f3e926a7569d044e0871c83906d3fa207d3635d9e078f75c44bbeb'
+        '400':
+          $ref: '#/components/responses/BadRequestDownload'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        #'403':
+        #  $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'  
+  /openlab/sdms/action/v1.0/items/{id}/comments:
+    post:
+      tags:
+        - comments
+      security:
+        - bearerAuth: []
+      summary: Add comment to a file
+      description: >-
+        Add comment to a file.
+      operationId: filecomment
+      parameters:
+        - in: path
+          name: id
+          description: file id for which comment is been added.
+          example: 3484179e-3542-4a24-b973-512e9ab23eaf
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comment:
+                  type: string
+                  description: comment entered by user
+            examples:
+              FileComment:
+                value:
+                  comment: This is comment entered for file
+      responses:
+        '201':
+          $ref: '#/components/responses/CommentCreated'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    get:
+      tags:
+        - comments
+      summary: 'Retrieve list of comments'
+      security:
+        - bearerAuth: []
+      operationId: getcomments
+      parameters:
+        - in: path
+          name: id
+          description: list of comments associated with a file.
+          example: 3484179e-3542-4a24-b973-512e9ab23eaf
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/fileComments'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'  
+  /openlab/sdms/content/v1.0/fileset:
+    get:
+      tags:
+        - content
+      summary: Retrieve a download link specific to the requested single or multiple filesets to be downloaded as ZIP.
+      security:
+        - bearerAuth: []
+      operationId: getSpecificDownloadLink
+      parameters:
+        - $ref: '#/components/parameters/nodesToZip-fileset'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/downloadLink'
+              example:
+                downloadlink: 'http://localhost:52080/openlab/sdms/content/v1.0/file/0fd8ef75c84dda48e64f4bd72e6a9f760111a9ce379c908d3e9771c7f131417767493e7f3cc3cfbcb528658762adc57df128831706d1ba8ef972ed610dd5f6a45f2ecf266ca9add2be2443cfc6d931176dac1ca4a33f3a8c8ae65ca744fcb16efb4f25bb10257efc43d4fd74dd396749dfdbc43ec4c02013b8a169847761ee2fe6931c8d0088a18634da770e00a7a3abadaf04882c3538e75aeaa75c9f0a8dc142737cea574a7d804487387808e488f8d7134e72ad0e14b2a3ae8d0a8eabcf41b7b94d3857099f82d515d1a33a4f7630191204377fe428012c04dbaf42c764c7c55a622a7523948c2ce9e093cad1bfade7c8848671538953bf7d8786'
+        '400':
+          $ref: '#/components/responses/BadRequestFilesetDownload'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntityFileSet'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError' 
+  /openlab/sdms/content/v1.0/file/{encryptedTokenAndNodeId}:
+    get:
+      tags:
+        - content
+      summary: Retrieve the requested resource using the download link.
+      operationId: getFileContent
+      parameters:
+        - in: path
+          name: encryptedTokenAndNodeId
+          required: true
+          schema:
+            type: string
+          description: Token for validation along with the Id of the file OR fileset Ids to be downloaded appended to it, both in clear text and then encrypted together. Download link is only valid for short time.
+          examples:
+            encryptedTokenAndFileId:
+              description: Token for validation along with the Id of the file OR fileset Ids to be downloaded appended to it, both in clear text and then encrypted together.
+              value: '0fd8ef75c84dda48e64f4bd72e6a9f760111a9ce379c908d3e9771c7f131417767493e7f3cc3cfbcb528658762adc57df128831706d1ba8ef972ed610dd5f6a45f2ecf266ca9add2be2443cfc6d931176dac1ca4a33f3a8c8ae65ca744fcb16efb4f25bb10257efc43d4fd74dd396749dfdbc43ec4c02013b8a169847761ee2fe6931c8d0088a18634da770e00a7a3abadaf04882c3538e75aeaa75c9f0a8dc142737cea574a7d804487387808e488f8d7134e72ad0e14b2a3ae8d0a8eabcf41b7b94d3857099f82d515d1a33a4f7630191204377fe428012c04dbaf42c764c7c55a622a7523948c2ce9e093cad1bfade7c8848671538953bf7d8786'
+      responses:
+        '200':
+          description: Successful operation
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFoundFileset'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntityStreamAPI'
+        '500':
+          $ref: '#/components/responses/InternalErrorDownload'
+  /openlab/sdms/content/v1.0/file/{id}/content:
+    get:
+      tags:
+        - content
+      summary: Retrieve the requested resource directly using the specified file/folder Id OR the latest version of the file/folder path specified, in single API call.
+      security:
+        - bearerAuth: []
+      operationId: getSpecificContent
+      parameters:
+        - $ref: '#/components/parameters/downloadNodeId'
+        - $ref: '#/components/parameters/fullFilePath'
+        - $ref: '#/components/parameters/downloadMimeType'
+      responses:        
+        '200':
+          description: Successful operation
+        '400':
+          $ref: '#/components/responses/BadRequestDownload'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        #'403':
+        #  $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'   
+  /openlab/sdms/content/v1.0/fileset/{id}/content:
+    get:
+      tags:
+        - content
+      summary: Retrieve the requested fileset stream directly, as ZIP, using the specified fileset Id in single API call.
+      security:
+        - bearerAuth: []
+      operationId: getSpecificFilesetContent
+      parameters:
+        - $ref: '#/components/parameters/filesetToZip'
+      responses:      
+        '200':
+          description: Successful operation
+        '400':
+          $ref: '#/components/responses/BadRequestFilesetDownload'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFoundFileset'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntityFileSetSingleAPI'
+        '500':
+          $ref: '#/components/responses/InternalErrorFilesetDownload'
+  /openlab/sdms/browse/v1.0/items/{id}/revisions:
+    get:
+      tags:
+        - content
+      summary: Retrieve the history of the specified file
+      security:
+        - bearerAuth: []
+      operationId: getItemRevisions
+      parameters:
+        - name: id
+          in: path
+          description: >-
+            The unique identifier that represent an item id.
+          required: true
+          schema:
+            type: string
+          examples:
+            id:
+              value: cf699839-c695-4524-8e88-082945c7b687        
+        - $ref: '#/components/parameters/limit-revisions'
+        - $ref: '#/components/parameters/offset'
+        - $ref: '#/components/parameters/orderRevisionsBy'
+        - $ref: '#/components/parameters/select-revisions'
+      responses:
+        '200':
+          $ref: '#/components/responses/revisionItems'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /openlab/sdms/action/v1.0/esignaturereasons:    
+    get:
+      tags:
+        - esign
+      summary: Retrieve list of esignature reasons
+      security:
+        - bearerAuth: []
+      operationId: getesignaturereasons
+      responses:
+        '200':
+          description: Successful operation
+          $ref: '#/components/responses/esignatureReasons'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError-AllExamples'
+  /openlab/sdms/action/v1.0/items/{id}/esignature:
+    post:
+      tags:
+        - esign
+      security:
+        - bearerAuth: []
+      summary: Add a signature to specified file
+      operationId: signFile
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The id of file to be signed
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  description: signature User name
+                password:
+                  type: string
+                  description: signature Hashed password (bcrypt is preferable)
+                domain:
+                  type: string
+                  description: signature domain
+                location:
+                  type: string
+                  description: signature location
+                reason:
+                  type: string
+                  description: signature reason
+            examples:
+              Esignature details:
+                value:
+                  username: Joe
+                  password: $2y$12$1EJxzo3RUGhMuiJsFJXLFeeO3i9Bt7W8dDheSxrscHJmut21uFZWi
+                  domain: domain.com
+                  location: L
+                  reason: I approve the document.
+      responses:
+        '201':
+          description: Signature applied
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /openlab/sdms/action/v1.0/items/{id}/copy/{destId}:
+    post:
+      tags:
+        - movecopy
+      security:
+        - bearerAuth: []
+      summary: copy a resource from one location to other.
+      operationId: copy
+      parameters:
+        - name: id
+          in: path
+          description: >-
+            The unique identifier that represent an item id.
+          required: true
+          schema:
+            type: string
+          examples:
+            id:
+              value: cf699839-c695-4524-8e88-082945c7b687
+        - $ref: '#/components/parameters/destId'
+      responses:
+        '201':
+          $ref: '#/components/responses/CopyResponses' 
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/CopyConflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /openlab/sdms/action/v1.0/items/{id}/move/{destId}:
+    post:
+      tags:
+        - movecopy
+      security:
+        - bearerAuth: []
+      summary: move a resource from one location to other.
+      operationId: move
+      parameters:
+        - name: id
+          in: path
+          description: >-
+            The unique identifier that represent an item id.
+          required: true
+          schema:
+            type: string
+          examples:
+            id:
+              value: cf699839-c695-4524-8e88-082945c7b687
+        - $ref: '#/components/parameters/destId'
+      responses:
+        '201':
+          description:  File or folder moved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/node'
+              example:
+                id: cf699839-c695-4524-8e88-082945c7b687
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/MoveConflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /openlab/sdms/content/v1.0/items/{id}/checkin:
+    post:
+      tags:
+        - versionfeature
+      security:
+        - bearerAuth: []
+      summary: Checkin a file. File marked as NOT checked out and upload a new version of file.
+      operationId: checkin
+      parameters:
+        - name: id
+          in: path
+          description: >-
+            The unique identifier that represent an item id.
+          required: true
+          schema:
+            type: string
+          examples:
+            id:
+              value: cf699839-c695-4524-8e88-082945c7b687
+        - $ref: '#/components/parameters/reason'
+        - $ref: '#/components/parameters/fullFilePath-OnlyFile'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                comment:
+                  type: string
+                  description: The comment for file checkin operation
+                metadata:
+                  type: string
+                  format: json
+                  description: >
+                    The additional properties for the file checkin as json with details of the property name, value and data type.
+                    Each property detail should include - Name, Value and DataType information in Json format.
+                    Supported data types include - text, interger, double, boolean, json, binary and datetime
+                    Examples - 
+                      "{ Name- Prop1, Value- dummy, dataType- text }"
+                      "{ Name- Prop2, Value- 238967, dataType- integer }"
+                      "{ Name- Prop3, Value- 238967.56, dataType- double }"
+                      "{ Name- Prop4, Value- true, dataType- boolean }"
+                      "{ Name- Prop5, Value- <jsonValue>, dataType- json }"
+                      "{ Name- Prop6, Value- <binaryValue>, dataType- binary }"
+                      "{ Name- Prop7, Value- <datetimeValueInUTC>, dataType- datetime }"
+                file:
+                  type: string
+                  format: binary
+                  description: The file to checkin
+      responses:
+        '201':
+          description:  File checked in and new version of file uploaded.
+          content:
+            application/json:
+              schema:
+                type: string
+              example:
+                id: 4484179e-3542-4a24-b973-512e9ab26eaf
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/CheckinConflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      tags:
+        - versionfeature
+      security:
+        - bearerAuth: []
+      summary: Update status in database to indicate file has been checked-in without actual upload of file.
+      operationId: checkin-patch
+      parameters:
+        - name: id
+          in: path
+          description: >-
+            The unique identifier that represent an item id.
+          required: true
+          schema:
+            type: string
+          examples:
+            id:
+              value: cf699839-c695-4524-8e88-082945c7b687
+        - $ref: '#/components/parameters/reason'
+        - $ref: '#/components/parameters/fullFilePath-OnlyFile'
+      responses:
+        '200':
+          description:  File checked in status updated
+          content:
+            application/json:
+              schema:
+                type: string
+              example:
+                id: 4484179e-3542-4a24-b973-512e9ab26eaf
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/CheckinConflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /openlab/sdms/content/v1.0/items/{id}/checkout:
+    get:
+      tags:
+        - versionfeature
+      security:
+        - bearerAuth: []
+      summary: Checkout a file. File marked as checked out and downloads a copy of file.
+      operationId: checkout
+      parameters:
+        - name: id
+          in: path
+          description: >-
+            The unique identifier that represents a file id.
+          required: true
+          schema:
+            type: string
+          examples:
+            id:
+              value: cf699839-c695-4524-8e88-082945c7b687
+        - $ref: '#/components/parameters/fullFilePath-OnlyFile'
+      responses:
+        '200':
+          description:  File checkedout and downloaded
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/CheckoutConflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    patch:
+      tags:
+        - versionfeature
+      security:
+        - bearerAuth: []
+      summary: File marked as checked out and actual file is not downloaded.
+      operationId: checkout-patch
+      parameters:
+        - name: id
+          in: path
+          description: >-
+            The unique identifier that represents a file id.
+          required: true
+          schema:
+            type: string
+          examples:
+            id:
+              value: cf699839-c695-4524-8e88-082945c7b687
+        - $ref: '#/components/parameters/fullFilePath-OnlyFile'
+      responses:
+        '200':
+          description:  File checkedout
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/CheckoutConflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /openlab/sdms/content/v1.0/items/{id}/undocheckout:
+    post:
+      tags:
+        - versionfeature
+      security:
+        - bearerAuth: []
+      summary: Undo checkout a file. File marked as NOT checked out.
+      operationId: undocheckout
+      parameters:
+        - name: id
+          in: path
+          description: >-
+            The unique identifier that represent an file id.
+          required: true
+          schema:
+            type: string
+          examples:
+            id:
+              value: cf699839-c695-4524-8e88-082945c7b687
+        - $ref: '#/components/parameters/reason'
+        - $ref: '#/components/parameters/fullFilePath-OnlyFile'
+      responses:
+        '200':
+          description: undo checkout successful
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/UndoCheckoutConflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /openlab/sdms/content/v1.0/extensions:    
+    get:
+      tags:
+        - misc
+      summary: Retrieve list of all allowed and blocked file type extensions
+      security:
+        - bearerAuth: []
+      operationId: getExtensions
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:                  
+                  allowedFileExtensions:
+                    type: array
+                    items:
+                      type: string
+                  blockedFileExtensions:
+                    type: array
+                    items:
+                      type: string
+              examples:
+                fileExtensions:
+                  $ref: '#/components/examples/file-extensions'
+                fileExtensionsEmpty:
+                  $ref: '#/components/examples/file-extensions-empty'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError-AllExamples'
+  /openlab/sdms/content/v1.0/items/{id}/rekey:
+    post:
+      tags:
+        - rekey
+      security:
+        - bearerAuth: []
+      summary: rekey files
+      operationId: rekey
+      parameters:
+        - name: id
+          in: path
+          description: >-
+            The unique identifier that represent an item id.
+          required: true
+          schema:
+            type: string
+          examples:
+            id:
+              value: cf699839-c695-4524-8e88-082945c7b687
+      responses:
+        '200':
+          description:  File rekeyed
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /openlab/sdms/storagemanagement/v1.0/relocatefolders:
+    post:
+      tags:
+        - storagemanagement
+      summary: Add entry for a new relocation request - immediate or on schedule
+      description: Setup a immediate OR on schedule relocation for selected folder and storage combination
+      operationId: addrelocationentry
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+                $ref: '#/components/schemas/relocateScheduleInput'
+            examples:
+              Relocate-OnSchedule-All:
+                $ref: '#/components/examples/relocate-onschedule-all'
+              Relocate-OnSchedule-AgeBased:
+                $ref: '#/components/examples/relocate-onschedule-agebased'
+              Relocate-now-All:
+                $ref: '#/components/examples/relocate-now-all2'
+              Relocate-now-AgeBased:
+                $ref: '#/components/examples/relocate-now-agebased2'
+      responses:
+        '201':
+          description: Successful operation
+          content:
+           application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+                  description: lock id
+            example: 443b4b70-3456-4fb2-4567-b2d72445667
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/ScheduleNameConflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    get:
+      tags:
+        - storagemanagement
+      security:
+        - bearerAuth: []
+      summary: Retrieve the list of all lock requests
+      operationId: getlocklist
+      responses:
+        '200':
+          $ref: '#/components/responses/relocateentries'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /openlab/sdms/storagemanagement/v1.0/relocateschedules:
+    get:
+      tags:
+        - storagemanagement
+      security:
+        - bearerAuth: []
+      summary: Retrieve the list of relocation schedules
+      operationId: getrelocationschedulelist
+      responses:
+        '200':
+          $ref: '#/components/responses/relocatescheduleslist'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /openlab/sdms/storagemanagement/v1.0/relocateschedules/{id}:
+    get:
+      tags:
+        - storagemanagement
+      security:
+        - bearerAuth: []
+      summary: Retrieve the details of the given relocation schedule
+      operationId: getrelocationschedulebyid
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The relocation schedule id to fetch details of.
+      responses:
+        '200':
+          $ref: '#/components/responses/singlerelocatescheduleentry'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/ScheduleNotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    put:
+      tags:
+        - storagemanagement
+      summary: Update an existing relocation schedule.
+      description: Update an existing schedule for relocation.
+      operationId: updaterelocationscheduleentry
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The relocation schedule id to update
+      requestBody:
+        content:
+          application/json:
+            schema:
+                $ref: '#/components/schemas/relocateScheduleUpdateInput'
+            examples:
+              Relocate-OnSchedule-All:
+                $ref: '#/components/examples/relocate-onschedule-all-update'
+              Relocate-OnSchedule-AgeBased:
+                $ref: '#/components/examples/relocate-onschedule-agebased-update'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+           application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+                  description: relocation id
+            example: 1e3b4b70-0b88-4fb2-a48c-b2d72411147a
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags:
+        - storagemanagement
+      summary: Delete an existing relocation schedule.
+      description: Delete a relocation schedule.
+      operationId: deleterelocationscheduleentry
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The relocation schedule id to delete
+      responses:
+        '204':
+          description: The requested item has been removed
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /openlab/sdms/storagemanagement/v1.0/relocateerrors/{relocaterequestqueueid}:
+    get:
+      tags:
+        - storagemanagement
+      security:
+        - bearerAuth: []
+      summary: Retrieve error details of the files that failed to relocate from given folder.
+      operationId: getrelocatedfileerrors
+      parameters:
+        - $ref: '#/components/parameters/relocaterequestqueueid'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          $ref: '#/components/responses/relocateerrors'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /openlab/sdms/storagemanagement/v1.0/relocatefolders/{relocaterequestqueueid}/resubmit:
+    post:
+      tags:
+        - storagemanagement
+      security:
+        - bearerAuth: []
+      summary: resubmit relocation folder that has completed with errors for reprocessing
+      operationId: resubmit
+      parameters:
+        - $ref: '#/components/parameters/relocaterequestqueueid'
+      responses:
+        '200':
+          description: folder successfully resubmitted for relocation.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /openlab/sdms/storagemanagement/v1.0/relocatefolders/{relocaterequestqueueid}/cancel:
+    delete:
+      tags:
+        - storagemanagement
+      security:
+        - bearerAuth: []
+      summary: cancel relocation
+      operationId: cancel
+      parameters:
+        - $ref: '#/components/parameters/relocaterequestqueueid'
+      responses:
+        '204':
+          description: The requested item has been removed
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /openlab/sdms/storagemanagement/v1.0/autolockfolders:
+    post:
+      tags:
+        - automaticlock
+      summary: Add entry for a new automatic lock request - on schedule
+      description: Setup a on schedule lock for selected folder
+      operationId: addautomaticlockentry
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+                $ref: '#/components/schemas/lockScheduleInput'
+            examples:
+              Lock-OnSchedule-All:
+                $ref: '#/components/examples/lock-onschedule-all'
+              Lock-OnSchedule-AgeBased:
+                $ref: '#/components/examples/lock-onschedule-agebased'
+      responses:
+        '201':
+          description: Successful operation
+          content:
+           application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+                  description: Newly added automatic lock schedule id
+            example: 443b4b70-3456-4fb2-4567-b2d72445667
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/ScheduleNameConflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /openlab/sdms/storagemanagement/v1.0/autolockschedules:
+    get:
+      tags:
+        - automaticlock
+      security:
+        - bearerAuth: []
+      summary: Retrieve the list of all automatic lock schedules
+      operationId: getautomaticlockschedulelist
+      responses:
+        '200':
+          $ref: '#/components/responses/lockscheduleslist'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /openlab/sdms/storagemanagement/v1.0/autolockschedules/{id}:
+    get:
+      tags:
+        - automaticlock
+      security:
+        - bearerAuth: []
+      summary: Retrieve the details of the given lock schedule
+      operationId: getautomaticlockschedulebyid
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The lock schedule id to fetch details of.
+      responses:
+        '200':
+          $ref: '#/components/responses/singlelockscheduleentry'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/ScheduleNotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    put:
+      tags:
+        - automaticlock
+      summary: Update an existing lock schedule.
+      description: Update an existing schedule for lock.
+      operationId: updatelockscheduleentry
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The lock schedule id to update
+      requestBody:
+        content:
+          application/json:
+            schema:
+                $ref: '#/components/schemas/lockScheduleUpdateInput'
+            examples:
+              Relocate-OnSchedule-All:
+                $ref: '#/components/examples/lock-onschedule-all-update'
+              Relocate-OnSchedule-AgeBased:
+                $ref: '#/components/examples/lock-onschedule-agebased-update'
+      responses:
+        '200':
+          description: Successful operation
+          content:
+           application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: string
+                  description: Id of the schedule updated
+            example: 1e3b4b70-0b88-4fb2-a48c-b2d72411147a
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/ScheduleNotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+    delete:
+      tags:
+        - automaticlock
+      summary: Delete an existing lock schedule.
+      description: Delete a lock schedule.
+      operationId: deletelockscheduleentry
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The lock schedule id to delete
+      responses:
+        '204':
+          description: The requested item has been removed
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/ScheduleNotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /openlab/sdms/storagemanagement/v1.0/autolockerrors/{lockscheduleid}:
+    get:
+      tags:
+        - automaticlock
+      security:
+        - bearerAuth: []
+      summary: Retrieve error details of the files that failed to lock from given folder.
+      operationId: getlockedfileerrors
+      parameters:
+        - $ref: '#/components/parameters/lockscheduleid'
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          $ref: '#/components/responses/lockerrors'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/ScheduleNotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+  /openlab/sdms/storagemanagement/v1.0/autolockfolders/{lockscheduleid}/resubmit:
+    post:
+      tags:
+        - automaticlock
+      security:
+        - bearerAuth: []
+      summary: Resubmit lock folder that has completed with errors for reprocessing
+      operationId: resubmitlock
+      parameters:
+        - $ref: '#/components/parameters/lockscheduleid'
+      responses:
+        '200':
+          description: Folder successfully resubmitted for lock.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/ScheduleNotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+components:
+  parameters:
+    id:
+      in: path
+      name: id
+      description: >-
+        The unique identifier that represent an item id. The `root` is used as
+        alias for root identifier if applicable for the API in use.
+      required: true
+      schema:
+        type: string
+      examples:
+        id:
+          value: cf699839-c695-4524-8e88-082945c7b687
+        root-alias:
+          value: root
+    root:
+      in: path
+      name: id
+      description: >-
+        The unique identifier that represent an item id. The `root` is used as
+        alias for root identifier if applicable for the API in use.
+      required: true
+      schema:
+        type: string
+      examples:
+        id:
+          value: root
+        root-alias:
+          value: root
+    destId:
+      in: path
+      name: destId
+      description: >-
+        The unique identifier that represents a parent folder id where the file or folder is to be copied or moved
+      required: true
+      schema:
+        type: string
+      examples:
+        destId:
+          value: gg699539-c695-4524-8e88-082945c5678
+        root-alias:
+          value: root
+    relocatefolderId:
+      in: path
+      name: relocatefolderId
+      description: >-
+        The unique identifier that represents relocate folder id.
+      required: true
+      schema:
+        type: string
+      examples:
+        relocatefolderId:
+          value: gg699539-c695-4524-8e88-082945c5673
+    relocaterequestqueueid:
+      in: path
+      name: relocaterequestqueueid
+      description: The unique identifier that represents relocate request queue id.
+      required: true
+      schema:
+        type: string
+      examples:
+        relocaterequestqueueid:
+          value: gg699539-c695-4524-8e88-082945c5673
+    lockscheduleid:
+      in: path
+      name: lockscheduleid
+      description: The unique identifier that represents lock schedule id.
+      required: true
+      schema:
+        type: string
+      examples:
+        lockscheduleid:
+          value: gg699539-c695-4524-8e88-082945c5673
+    select:
+      in: query
+      name: select
+      description: >
+        The comma-separated list of properties to return.
+
+        If the parameter is omitted, the `id` is requested.
+
+
+        The following list describes some available properties to retrieve:
+
+        * `path`
+
+        * `kind`
+
+        * `name`
+        
+        * `permissions`
+
+        * `initialVersionDate`
+
+        * `contentModifiedDate`
+
+        * `initialVersionBy`
+
+        * `revision`
+
+        * `parentId`
+        
+        * `eSig`
+
+        * `m/%property-name%` - name of a property which value must be retrieved
+        if available, e.g.
+          `m/acaml:name`. `m/*` to return all available metadata.
+
+        See `Item` schema for all available general properties.
+
+        <br>
+
+        <br>
+
+        Note: All values must be encoded.
+      explode: false
+      schema:
+        type: array
+        items:
+          type: string
+      examples:
+        short:
+          description: To retrieve an info which contains `name` and `kind` only
+          value:
+            - name
+            - kind
+        short-with-metadata:
+          description: >-
+            To retrive an info which contains `name`, `kind` and requested
+            `ns:applicationVersion`, `ns:acamlInjection` metadata values
+          value:
+            - name
+            - kind
+            - 'm/ns:applicationVersion'
+            - 'm/ns:acamlInjection'          
+    selectNode:
+      in: query
+      name: select
+      description: >
+        The comma-separated list of properties to return.
+
+        If the parameter is omitted, the `id` is requested.
+
+
+        The following list describes some available properties to retrieve:
+
+        * `path`
+
+        * `kind`
+
+        * `name`
+
+        * `initialVersionDate`
+
+        * `contentModifiedDate`
+
+        * `initialVersionBy`
+
+        * `revision`
+
+        * `parentId`
+        
+        See `node` schema for all available general properties.
+
+        <br>
+
+        <br>
+
+        Note: All values must be encoded.
+      explode: false
+      schema:
+        type: array
+        items:
+          type: string
+      examples:
+        short:
+          description: To retrieve an info which contains `name` and `kind` only
+          value:
+            - name
+            - kind
+        short-with-metadata:
+          description: >-
+            To retrive an info which contains `name`, `kind` and requested
+            `ns:applicationVersion`, `ns:acamlInjection` metadata values
+          value:
+            - name
+            - kind
+            - 'm/ns:applicationVersion'
+            - 'm/ns:acamlInjection'          
+    orderBy:
+      in: query
+      name: orderBy
+      description: >-
+        Comma-separated list of properties used to sort the list of items in the
+        folder. Each key sorts ascending by default, but may be reversed with
+        the 'desc' modifier.
+      required: false
+      schema:
+        type: string
+      examples:
+        sort-by-name-and-kind:
+          value: 'name desc, kind'
+        sort-by-initialVersionDate-desc:
+          value: initialVersionDate desc
+    orderRevisionsBy:
+      in: query
+      name: orderBy
+      description: >-
+        Revision number would be used to sort the list of items in the
+        folder. Each key sorts ascending by default, but may be reversed with
+        the 'desc' modifier.
+      required: false
+      schema:
+        type: string
+      examples:
+        sort-by-desc:
+          value: 'desc'
+    limit-revisions:
+      in: query
+      name: limit
+      description: >-
+        The maximum number of results to return per request. If the parameter
+        is omitted, the response contains all resources.
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        default: 1000
+        format: int32          
+    limit:
+      in: query
+      name: limit
+      description: >-
+        The maximum number of results to return per request. If the parameter
+        is omitted, the response contains all resources
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        format: int32
+    offset:
+      in: query
+      name: offset
+      description: The number of items to skip in a result set
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+        format: int32
+    filter-children:
+      in: query
+      name: filter
+      schema:
+        type: string
+      examples:
+        folders-only:
+          value: kind eq folder
+        files-starting-with-test:
+          value: kind eq file AND name eq 'test*'
+      description: >
+        A query for filtering the response supports the following operators:
+
+        | Operator |      Description      |              Example              |
+        
+        |:-------  |:----------------------|:----------------------------------|
+        
+        | **Comparison Operators**                                             |
+        
+        | `eq`     | Equal                 | kind eq file                      |
+        
+        | **Logical Operators**                                                |
+        
+        | ``and``  | Logical and           | kind eq file AND name eq '*.sszip'|
+
+        Filter supports wildcard search for the 'name' property using the following format: 
+        name eq 'test*'
+
+        #### **Encoding query parameters**
+
+        When specifying query parameters, make sure you appropriately encode
+        characters that are reserved for special meanings in an URI.      
+    select-revisions:
+      in: query
+      name: select
+      description: >
+        The comma-separated list of properties to return.
+
+        If the parameter is omitted, the `id` is requested.
+        
+
+        The following list describes some available properties to retrieve:
+
+        * `kind`
+
+        * `name`
+
+        * `revision`
+
+        * `m/%property-name%` - name of a property which value must be retrieved
+        if available, e.g.
+          `m/acaml:name`. `m/*` to return all available metadata.
+
+        See `Item` schema for all available general properties.
+
+        <br>
+
+        <br>
+
+        Note: All values must be encoded.
+      explode: false
+      schema:
+        type: array
+        items:
+          type: string
+      examples:
+        short:
+          description: To retrieve an info which contains `name` and `kind` only
+          value:
+            - name
+            - kind
+        short-with-metadata:
+          description: >-
+            To retrive an info which contains `name`, `kind` and requested
+            `ns:applicationVersion`, `ns:acamlInjection` metadata values
+          value:
+            - name
+            - kind
+            - 'm/ns:applicationVersion'
+            - 'm/ns:acamlInjection'
+    downloadNodeId:    
+      in: path
+      name: id
+      required: true
+      schema:
+        type: string
+      description: >-
+        The unique identifier that represent an item id - file OR folder Id. The `root` is used as
+        alias for root identifier if applicable for the API in use.
+      examples:
+        id:
+          value: 3484179e-3542-4a24-b973-512e9ab23eaf
+        root-alias:
+          value: root
+    nodesToZip-fileset:    
+      in: query
+      name: nodesToZip
+      required: true
+      schema:
+        type: string
+      examples:
+        nodesToZip:
+          description: Comma seperated list of unique identifiers that represent a fileset Id.
+          value:
+            - '3484179e-3542-4a24-b973-512e9ab23eaf, 5468172d-5641-4e89-e530-389d9ba89fae'
+    nodesToZip-fileandfolder:    
+      in: query
+      name: nodesToZip
+      schema:
+        type: string
+      examples:
+        nodesToZip:
+          description: 'Comma seperated list of unique identifiers that represent a node id - file, folder OR fileset Id, where a fileset is processed as a normal folder.'
+          value:
+            - '3484179e-3542-4a24-b973-512e9ab23eaf, 5468172d-5641-4e89-e530-389d9ba89fae'
+    filesetToZip:    
+      in: path
+      name: id
+      required: true
+      schema:
+        type: string
+      description: >-
+        The unique identifier that represent a fileset Id.
+      examples:
+        filesetToZip:
+          description: Unique identifier that represents a fileset Id.
+          value:
+            - '3484179e-3542-4a24-b973-512e9ab23eaf'
+    downloadMimeType: 
+      in: header
+      name: Accept
+      schema:
+        type: string
+      description: MIME type specified when the requested file is to be downloaded as zip. In case of folder OR multiple files, the type is ignored and output is always a zip.
+      example: application/zip
+    fullFilePath:
+      in: query
+      name: fullFilePath
+      description: >-
+        Full path of the file including the file name OR folder to be downloaded when 'root' is specified in the path.
+      required: false
+      schema:
+        type: string
+      examples:        
+        FullPath-File:
+          $ref: '#/components/examples/fullPath-file'
+        FullPath-Folder:
+          $ref: '#/components/examples/fullPath-folder'
+    fullFolderPath:
+      in: query
+      name: fullFolderPath
+      description: >-
+        Full path of the folder on which the operation is to be performed when 'root' is specified in the path.
+      required: false
+      schema:
+        type: string
+      examples: 
+        FullPath-Folder:
+          $ref: '#/components/examples/fullPath-folder'
+    fullFilePath-OnlyFile:
+      in: query
+      name: fullFilePath
+      description: >-
+        Full path of the file including the file name to be downloaded when 'root' is specified in the path.
+      required: false
+      schema:
+        type: string
+      examples:        
+        FullPath-File:
+          $ref: '#/components/examples/fullPath-file'
+    nodes-to-archive:
+      in: query
+      name: nodesToArchive
+      description: >
+        The comma-separated list of nodes selected to archive.
+      explode: false
+      schema:
+        type: array
+        items:
+          type: string
+      examples:
+        selectedIds:
+          description: List of file/folder Ids to be submitted for archival
+          value:
+            - 'cf699839-c695-4524-8e88-082945c7b687'
+            - 'fh567789-c695-4524-8e88-082945c7b687'
+    lockchildren:
+      in: query
+      name: lockchildren
+      description: in case of a folder, if this value is true then children would be locked
+      required: false
+      schema:
+        type: boolean
+        example: false
+    unlockchildren:
+      in: query
+      name: unlockchildren
+      description: in case of a folder, if this value is true then children would be unlocked
+      required: false
+      schema:
+        type: boolean
+        example: false
+    idonly:
+      in: query
+      name: idonly
+      description: this parameter will return only id of node if path is given if value is set to true. In any other case this parameter would be ignored.
+      required: false
+      schema:
+        type: boolean
+        example: false
+    reason:
+      in: query
+      name: reason
+      description: Reason for operation to perform
+      required: false
+      schema:
+        type: string
+        example: User specified reason.
+    lockReason:
+      in: query
+      name: reason
+      description: reason for locking the node
+      required: false
+      schema:
+        type: string
+        example: reason for locking the node
+    unlockReason:
+      in: query
+      name: unlockReason
+      description: reason for unlocking the node
+      required: false
+      schema:
+        type: string
+        example: reason for unlocking the node
+  schemas:  
+    User:
+      required:
+      - name
+      type: object
+      properties:
+        id:
+          format: int32
+          type: integer
+        name:
+          type: string
+        fullName:
+          type: string
+        domain:
+          type: string
+      example:
+        id: 13
+        name: Joe
+        fullName: Joe Smith
+        domain: MYCOMPANY
+    relocateentry:
+      type: object
+      properties:
+        relocaterequestqueueid:
+          type: string
+          example: 3484179e-3542-4a24-b973-512e9ab23eaf
+          description: The unique identifier that represent a resource
+        folderpath:
+          type: string
+          description: The virtual full folder path in system
+          example: \ProjectA\Reports
+        processingstatus:
+          type: object
+          properties:
+            totalcount:
+              type: integer
+              description: Count of total files in selected folder
+              example: 40
+            completedcount:
+              type: integer
+              description: Count of total files relocated successfully from the selected folder
+              example: 37
+            errorcount:
+              type: integer
+              description: Count of files that failed to relocate from the selected folder
+              example: 3
+            state:
+              type: object
+              properties:
+                completed:
+                  type: boolean
+                  description: Relocation processsing is completed
+                  example: false
+                pending:
+                  type: boolean
+                  description: True, when a job is yet to be picked up for processing
+                  example: false
+                inprogress:
+                  type: boolean
+                  description: The relocation is in progress
+                  example: false                
+                resubmitted:
+                  type: boolean
+                  description: The failed files have been resubmitted for relocation
+                  example: false
+              example:
+                completed: false
+                pending: false
+                inprogress: true
+              description:  State of the relocation request processing
+        deststoragename:
+          type: string
+          description: destination storage name
+          example: storage 1
+        submitteddate:
+          type: string
+          format: date-time
+          description: >-
+            The UTC date and time when the job was submitted
+        submittedby:
+          type: string
+          description: >-
+            Username of the user who submitted the relocation request
+          example: 'admin (admin)'
+        criteria:
+          type: string
+          description: String representation of the file selection criteria
+          example: 
+            - type: 'agebased'
+              duration: 3 
+              period: 'weeks'
+              basedon: 'version date'
+    lockentry:
+      type: object
+      properties:
+        lockscheduleid:
+          type: string
+          example: 3484179e-3542-4a24-b973-512e9ab23eaf
+          description: The unique identifier that represent a resource
+        folderpath:
+          type: string
+          description: The virtual full folder path in system
+          example: \ProjectA\Reports
+        processingstatus:
+          type: object
+          properties:
+            totalcount:
+              type: integer
+              description: Count of total files in selected folder
+              example: 40
+            completedcount:
+              type: integer
+              description: Count of total files lock successfully from the selected folder
+              example: 37
+            errorcount:
+              type: integer
+              description: Count of files that failed to lock from the selected folder
+              example: 3
+            state:
+              type: object
+              properties:
+                completed:
+                  type: boolean
+                  description: lock processsing is completed
+                  example: false
+                pending:
+                  type: boolean
+                  description: True, when a job is yet to be picked up for processing
+                  example: false
+                inprogress:
+                  type: boolean
+                  description: The lock is in progress
+                  example: false                
+                resubmitted:
+                  type: boolean
+                  description: The failed files have been resubmitted for lock
+                  example: false
+              example:
+                completed: false
+                pending: false
+                inprogress: true
+              description:  State of the lock request processing
+        submitteddate:
+          type: string
+          format: date-time
+          description: >-
+            The UTC date and time when the job was submitted
+        submittedby:
+          type: string
+          description: >-
+            Username of the user who submitted the lock request
+          example: 'admin (admin)'
+        locksubfolder:
+           type: boolean
+           description: property would be set to true if sub folder should be locked if all files within it are locked.
+        criteria:
+          type: string
+          description: String representation of the file selection criteria
+          example: 
+            - type: 'agebased'
+              duration: 3 
+              period: 'weeks'
+              basedon: 'version date'
+    relocatescheduleentryschema:
+      type: object
+      properties:
+        relocationtype:
+          type: string
+          description: Type that states whether the relocation is a schedule or now kind of request
+          example: Scheduled
+        schedulename:
+          type: string
+          description: Name of the relocation schedule
+          example: 'Monthly Data Relocation Schedule'
+        submitteddate:
+          type: string
+          format: date-time
+          description: Date and time when the request was submitted to the system by the user
+          example: 2022-11-25 13:45:27.629829+05:30
+        submittedby:
+          type: string
+          description: Name of the user who submitted the relocation request
+          example: 'admin'
+        nextruntime:
+          type: string
+          description: Name of the relocation schedule
+          example: 'Monthly Data Relocation Schedule'
+        folderpath:
+          type: string
+          example: /Document/Reports
+          description: The virtual full folder path in system
+        deststoragename:
+          type: string
+          description: destination storage name
+          example: storage 1
+        criteria:
+          type: string
+          description: String representation of the file selection criteria
+          example: 
+            - type: 'agebased'
+              duration: 3 
+              period: 'weeks'
+              basedon: 'version date'
+    relocateallschedulesschema:
+      type: object
+      properties:
+        scheduleid:
+          type: string
+          example: 3484179e-3542-4a24-b973-512e9ab23eaf
+          description: The unique identifier that represent a resource
+        schedulename:
+          type: string
+          description: Name of the relocation schedule
+          example: Weekly Data Relocation Schedule
+        folderpath:
+          type: string
+          example: /Document/Reports
+          description: The virtual full folder path in system
+        deststoragename:
+          type: string
+          description: destination storage name
+          example: ContentStorageA
+        frequency:
+          type: string
+          description: Type that states whether the schedule should reoccur weekly or monthly
+          example: Weekly
+        criteria:
+          type: string
+          description: String representation of the file selection criteria
+          example: 
+            - type: 'agebased'
+              duration: 3 
+              period: 'weeks'
+              basedon: 'version date'
+    lockallschedulesschema:
+      type: object
+      properties:
+        scheduleid:
+          type: string
+          example: 3484179e-3542-4a24-b973-512e9ab23eaf
+          description: The unique identifier that represent a resource
+        schedulename:
+          type: string
+          description: Name of the lock schedule
+          example: Weekly Data Lock Schedule
+        folderpath:
+          type: string
+          example: /Document/Reports
+          description: The virtual full folder path in system
+        locksubfolder:
+          type: boolean
+          example: true
+          description: The lock sub folder option that the user configured the schedule with
+        frequency:
+          type: string
+          description: Type that states whether the schedule should reoccur weekly or monthly
+          example: Weekly
+        criteria:
+          type: string
+          description: String representation of the file selection criteria
+          example: 
+            - type: 'agebased'
+              duration: 3 
+              period: 'weeks'
+              basedon: 'version date'        
+        processingstatus:
+          type: object
+          properties:
+            errorcount:
+              type: integer
+              description: Count of nodes that failed to lock from the selected folder
+              example: 3
+            state:
+              type: object
+              properties:
+                completed:
+                  type: boolean
+                  description: Lock processsing is completed
+                  example: false
+                pending:
+                  type: boolean
+                  description: True, when a job is yet to be picked up for processing
+                  example: false
+                inprogress:
+                  type: boolean
+                  description: The lock is in progress
+                  example: false                
+                resubmitted:
+                  type: boolean
+                  description: The failed files have been resubmitted for lock
+                  example: false
+              example:
+                completed: false
+                pending: false
+                inprogress: true
+              description:  State of the lock request processing
+    relocateerrorresponseschema:
+      type: object
+      properties:        
+        relocaterequestqueueid:
+          type: string
+          example: 3484179e-3542-4a24-b973-512e9ab23eaf
+          description: The unique identifier that represents the request queue id
+        deststoragename:
+          type: string
+          description: Destination storage name
+          example: Storage 2
+        submitteddate:
+          type: string
+          format: date-time
+          description: The UTC date and time when the job was submitted
+        submittedby:
+          type: string
+          description: Username of the user submitting the job
+          example: 'admin (admin)'
+        relocateerrorentry:
+          type: object
+          properties:
+            virtualfilepath:
+              type: string
+              example: /project/results/results.ssizip
+              description: Virtual file path of the file.
+            physicalfilepath:
+              type: string
+              description: Physical path of the source file.
+              example: C:\SStorage\Content\OpenLab\22\053012\{02B7B639-8A37-487E-8490-6CA095AE695A}\1ecc39bb5cfa41c491f6078be325c25a
+            sourcestoragename:
+              type: string
+              description: Name of the source file storage.
+              example: Storage 1
+            errormessage:
+              type: string
+              description: Message that indicates the error due to which the file failed to relocate.
+              example: File is not found.
+    lockscheduleentryschema:
+      type: object
+      properties:
+        schedulename:
+          type: string
+          description: Name of the lock schedule
+          example: 'Monthly Data Lock Schedule'
+        submitteddate:
+          type: string
+          format: date-time
+          description: Date and time when the request was submitted to the system by the user
+          example: 2022-11-25 13:45:27.629829+05:30
+        submittedby:
+          type: string
+          description: Name of the user who submitted the lock request
+          example: 'admin'
+        folderpath:
+          type: string
+          example: /Document/Reports
+          description: The virtual full folder path in system
+        locksubfolder:
+          type: boolean
+          example: true
+          description: The lock sub folder option that the user configured the schedule with
+        criteria:
+          type: string
+          description: String representation of the file selection criteria
+          example: 
+            - type: 'agebased'
+              duration: 3 
+              period: 'weeks'
+              basedon: 'version date'
+        scheduleproperties:
+          type: array
+          items:
+            $ref: '#/components/schemas/lockSchedulePropertiesEntry'
+            description: Array of schedule properties
+        nextruntime:
+          type: string
+          description: Date and time when the schedule next run 
+          example: 2022-11-25 13:45:27.629829+05:30
+        lastruntime:
+          type: string
+          description:  Date and time when the schedule ran last
+          example: 2022-11-25 13:45:27.629829+05:30
+        processingstatus:
+          type: object
+          properties:
+            errorcount:
+              type: integer
+              description: Count of nodes that failed to lock from the selected folder
+              example: 3
+            state:
+              type: object
+              properties:
+                completed:
+                  type: boolean
+                  description: Lock processsing is completed
+                  example: false
+                pending:
+                  type: boolean
+                  description: True, when a job is yet to be picked up for processing
+                  example: false
+                inprogress:
+                  type: boolean
+                  description: The lock is in progress
+                  example: false                
+                resubmitted:
+                  type: boolean
+                  description: The failed files have been resubmitted for lock
+                  example: false
+              example:
+                completed: false
+                pending: false
+                inprogress: true
+              description:  State of the lock request processing
+    lockerrorresponseschema:
+      type: object
+      properties:
+        submitteddate:
+          type: string
+          format: date-time
+          description: The UTC date and time when the job was submitted
+        submittedby:
+          type: string
+          description: Username of the user submitting the job
+          example: 'admin (admin)'
+        lockerrorentry:
+          type: object
+          properties:
+            virtualfilepath:
+              type: string
+              example: /project/results/results.ssizip
+              description: Virtual file path of the file.
+            errormessage:
+              type: string
+              description: Message that indicates the error due to which the file failed to lock.
+              example: File is not found.
+    node:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 3484179e-3542-4a24-b973-512e9ab23eaf
+          description: The unique identifier that represent a resource
+        path:
+          type: string
+          description: Resource full path
+          example: /project/results/results.ssizip
+        linkedBy: 
+          type: string
+          description: Linked by id of the file - unique through out the revisions of a file
+          example: 51774834-6479-4782-ac03-a03a40fbff9f
+        kind:
+          type: string
+          enum:
+            - file
+            - folder
+          description: Resource type
+        size:
+          type: integer
+          description: Resource size represented as number of bytes
+          example: 256
+        isFileSet:
+          type: boolean
+          description: This value will be true if the node is a File Set.
+          example: true
+        state:
+          type: object
+          properties:
+            readOnly:
+              type: boolean
+              description: 3.x only. True, when file is in readonly mode.
+              example: false
+            archived:
+              type: boolean
+              description: True, when file is archived.
+              example: false
+            checkedOut:
+              type: boolean
+              description: True, when file is checked out.
+              example: false
+            inProcess:
+              type: boolean
+              description: 3.x only. True, when file is submitted to BPM workflow.
+              example: false
+            pendingCheckout:
+              type: boolean
+              description: 3.x only. True, when file checkout operation started but not completed yet.
+              example: false
+          example:
+            readOnly: false
+            archived: false
+            checkedOut: true
+            inProcess: false
+            pendingCheckout: false
+          description: Resource state
+        parentId:
+          type: string
+          description: The parent identifier
+          example: 1234179e-3542-4a24-b973-512e9ab23eaf
+        name:
+          type: string
+          description: Resource name
+          example: results.ssizip
+        versionDate:
+          type: string
+          format: date-time
+          description: >-
+            The UTC date and time when the resource was uploaded, in ISO 8601
+            format
+        initialVersionDate:
+          type: string
+          format: date-time
+          description: >-
+            The UTC date and time when the resource was created, in ISO 8601
+            format
+          example: '2019-11-17T00:11:22.333Z'
+        contentModifiedDate:
+          type: string
+          format: date-time
+          description: >-
+            The UTC date and time when the resource was modified, in ISO 8601
+            format
+          example: '2019-11-17T00:22:33.444Z'
+        checkedOutBy:
+          type: string
+          description: >-
+            Username of the checked out file
+          example: 'admin'
+        initialVersionBy:
+          type: string
+          description: >-
+            User who created the file
+          example: 'admin'
+        contentModifiedBy:
+          type: string
+          description: >-
+            User who modified the file
+          example: 'admin'
+        versionedBy:
+          type: string
+          description: >-
+            User who uploaded the file
+          example: 'admin'
+        revision:
+          type: integer
+          description: The file revision
+          example: 1
+        permissions:
+          type: object
+          properties:
+            userAccess:
+              type: array
+              items:
+                type: string
+              description: The array of allowed permissions for the resource. if the permission is not listed, the user does not have prvivilge to perform that operation
+              example:
+                - addfile
+                - addfolder
+                - write
+                - read
+                - sign
+                - delete
+                - move
+                - copy
+                - archive
+      required:
+       - id
+    eSigParams:
+          type: object
+          properties:
+            signer:
+              type: string
+            reason:
+              type: string
+            signDate:
+              type: string
+            title:
+              type: string
+            location:
+              type: string
+          example:
+            signer: admin
+            reason: I am the author of this document
+            signDate: '2020-09-10T15:43:27.550Z'
+          required:
+            - signer
+            - reason
+            - signDate
+    eSigReason:
+          type: object
+          properties:
+            id:
+              type: string
+            reason:
+              type: string
+            localizedReason:
+              type: string
+          example:
+            id: admin
+            reason: I am the author of this document
+            localizedReason: I am the author of this document       
+    nodeExistsResultSchema:
+      type: object
+      properties:
+        id:
+          type: string
+        isNodePresent:
+          type: boolean
+        kind:
+          type: string
+      example:
+        id: 51774834-6479-4782-ac03-a03a40fbff9f
+        isNodePresent: true
+        kind: file      
+    copyResponseSchema:
+      type: object
+      properties:
+          nodeId: 
+            type: string
+            description: The unique identifier that represents a resource
+          message: 
+            type: string
+            description: The summary of the copy operation performed.
+          actionfailureInfo: 
+            type: object
+            description: The error details of each file copy failure.
+    lockResponseSchema:
+      type: object
+      properties:
+          nodeId: 
+            type: string
+            description: The unique identifier that represents a resource
+          message: 
+            type: string
+            description: The summary of the lock operation performed.
+          actionfailureInfo: 
+            type: object
+            description: The error details of each file lock failure.
+    unlockResponseSchema:
+      type: object
+      properties:
+          nodeId: 
+            type: string
+            description: The unique identifier that represents a resource
+          message: 
+            type: string
+            description: The summary of the unlock operation performed.
+          actionfailureInfo: 
+            type: object
+            description: The error details of each file with unlock failure.
+    item:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 3484179e-3542-4a24-b973-512e9ab23eaf
+          description: The unique identifier that represents a resource
+        path:
+          type: string
+          description: Resource full path
+          example: /project/results/results.ssizip
+        kind:
+          type: string
+          enum:
+            - file
+            - folder
+          description: Resource type
+        size:
+          type: integer
+          description: Resource size represented as number of bytes
+          example: 256
+        isFileSet:
+          type: boolean
+          description: This value will be true if the node is a File Set.
+          example: true
+        isLatestRevision:
+          type: boolean
+          description: this value will be true if it is latest revision of file.
+          example: true
+        state:
+          type: object
+          properties:
+            readOnly:
+              type: boolean
+              description: 3.x only. True, when file is in readonly mode.
+              example: false
+            archived:
+              type: boolean
+              description: True, when file is archived.
+              example: false
+            checkedOut:
+              type: boolean
+              description: True, when file is checked out.
+              example: false
+            inProcess:
+              type: boolean
+              description: 3.x only. True, when file is submitted to BPM workflow.
+              example: false
+            pendingCheckout:
+              type: boolean
+              description: 3.x only. True, when file checkout operation started but not completed yet.
+              example: false
+          example:
+            readOnly: false
+            archived: false
+            checkedOut: true
+            inProcess: false
+            pendingCheckout: false
+          description: Resource state
+        parentId:
+          type: string
+          description: The parent identifier
+          example: 1234179e-3542-4a24-b973-512e9ab23eaf
+        name:
+          type: string
+          description: Resource name
+          example: results.ssizip
+        versionDate:
+          type: string
+          format: date-time
+          description: >-
+            The UTC date and time when the resource was uploaded, in ISO 8601
+            format
+        initialVersionDate:
+          type: string
+          format: date-time
+          description: >-
+            The UTC date and time when the resource was created, in ISO 8601
+            format
+          example: '2019-11-17T00:11:22.333Z'
+        contentModifiedDate:
+          type: string
+          format: date-time
+          description: >-
+            The UTC date and time when the resource was modified, in ISO 8601
+            format
+          example: '2019-11-17T00:22:33.444Z'
+        checkedOutBy:
+          type: string
+          description: >-
+            Username of the checked out file
+          example: 'admin'
+        revision:
+          type: integer
+          description: The file revision
+          example: 1
+        permissions:
+          type: array
+          items: 
+            type: string
+          example:
+            - add
+            - write
+            - read
+            - delete
+            - move
+            - copy
+            - sign
+            - archive
+            - quicksearch
+            - advancesearch
+            - viewlog
+          description: The array of allowed permissions for the resource. if the permission is not listed, the user does not have permission to perform that operation
+        eSig:
+          type: array
+          items:
+            $ref: '#/components/schemas/eSigParams'
+        m:
+          type: object
+          description: The object of metadata key values
+          example:
+            "checksum" : "djghsjdghjskghs5584583gjhgdghkdfhg"
+            "archivedBy": "admin"
+            "uploadreason" : "this file is uploaded."
+      required:
+        - id
+    revisionItem:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 3484179e-3542-4a24-b973-512e9ab23eaf
+          description: The unique identifier that represent a resource
+        kind:
+          type: string
+          enum:
+            - file
+            - folder
+          description: Resource type
+        linkedBy: 
+          type: string
+          description: Linked by id of the file - unique through out the revisions of a file
+          example: 51774834-6479-4782-ac03-a03a40fbff9f
+        isFileSet:
+          type: boolean
+          description: This value will be true if the node is a File Set.
+          example: true
+        isLatestRevision:
+          type: boolean
+          description: this value will be true if it is latest revision of file.
+          example: true
+        parentId:
+          type: string
+          description: The parent identifier
+          example: 1234179e-3542-4a24-b973-512e9ab23eaf
+        name:
+          type: string
+          description: Resource name
+          example: results.ssizip
+        revision:
+          type: integer
+          description: The file revision
+          example: 1
+        permissions:
+          type: array
+          items: 
+            type: string
+          example:
+            - add
+            - write
+            - read
+            - delete
+            - move
+            - copy
+            - sign
+            - archive
+            - quicksearch
+            - advancesearch
+            - viewlog
+          description: The array of allowed permissions for the resource. if the permission is not listed, the user does not have permission to perform that operation
+      required:
+        - id
+    error:
+      type: object
+      properties:
+        code:
+          type: string
+          example: BadArgument
+          description: >-
+            The value is a language-independent string. Its value is a
+            service-defined error code. This code serves as a sub-status for the
+            HTTP error code specified in the response
+        message:
+          type: string
+          example: Folder name cannot be empty
+          description: 'Human-readable, language-dependent representation of the error'
+          items:
+            $ref: '#/components/schemas/error'
+    keyValueEntry:
+          type: object
+          properties:
+            key:
+              type: string
+            value:
+              type: string
+          example:
+            key: location
+            value: "c:\\test"
+          required:
+            - key
+            - value
+    storage:
+          type: object
+          properties:
+            id:
+              type: string
+            storageType:
+              type: string
+            isPrimary:
+              type: boolean
+            active:
+              type: boolean
+            priority:
+              type: integer
+            properties:
+              type: array
+              items:
+               $ref: '#/components/schemas/keyValueEntry'
+    storageInput:
+          type: object
+          properties:
+            storageType:
+              type: string
+              description: FileSystem, AWS
+            active:
+              type: boolean
+              description: true if the storage is to be marked as active.
+            isPrimary:
+              type: boolean
+              description: true if the storage is to be marked as the Primary Storage. Marking a storage Primary, marks all existing storages as secondary.
+            storageProperties:
+              type: array
+              items:
+               $ref: '#/components/schemas/keyValueEntry'
+               description: Array of storage properties
+    fileComment:
+          type: object
+          properties:
+            id:
+              type: string
+              description: 3484179e-3542-4a24-b973-512e9ab23eaf
+            nodeId:
+              type: string
+              description: 3456779e-3542-4a24-b973-512dfgdb23eaf
+            linkedbyId:
+              type: string
+              description: 1223779e-3542-4a24-b973-512dfgdb46fghf
+            commentBy:
+              type: string
+              description: >-
+               Username of the person adding comment
+              example: 'admin'
+            comment:
+              type: string
+              description: >-
+               comment entered by user
+              example: 'Comment for a file'
+    relocateFolderInput:
+          type: object
+          properties:
+            folderid:
+              type: string
+              description: Id of folder selected for relocation
+            storageid:
+              type: string
+              description: Id of storage to which folder contents need to be relocated
+    relocateScheduleInput:
+          type: object
+          properties:
+            name:
+              type: string
+              description: Name of the relocation schedule
+            folderid:
+              type: string
+              description: Id of folder selected for relocation
+            storageid:
+              type: string
+              description: Id of storage to which folder contents need to be relocated   
+            scheduletype:
+              type: string
+              description: Type that states whether the schedule should be added to queue now OR on a schedule
+            scheduleproperties:
+              type: array
+              items:
+               $ref: '#/components/schemas/relocationSchedulePropertiesEntry'
+               description: Array of schedule properties
+            criteria:
+              type: array
+              items:
+               $ref: '#/components/schemas/relocationCriteriaEntry'
+               description: Array of file selection properties
+    relocateScheduleUpdateInput:
+          type: object
+          properties:
+            storageid:
+              type: string
+              description: Id of storage to which folder contents need to be relocated  
+            scheduleproperties:
+              type: array
+              items:
+               $ref: '#/components/schemas/relocationUpdateSchedulePropertiesEntry'
+               description: Array of schedule properties
+            criteria:
+              type: array
+              items:
+               $ref: '#/components/schemas/relocationCriteriaEntry'
+               description: Array of file selection properties
+    lockScheduleUpdateInput:
+          type: object
+          properties:
+            locksubfolder:
+              type: boolean
+              description: Property would be set to true if sub folder should be locked if all files within it are locked.
+            scheduleproperties:
+              type: array
+              items:
+               $ref: '#/components/schemas/lockUpdateSchedulePropertiesEntry'
+               description: Array of schedule properties
+            criteria:
+              type: array
+              items:
+               $ref: '#/components/schemas/lockCriteriaEntry'
+               description: Array of file selection properties
+    relocationSchedulePropertiesEntry:
+          type: object
+          properties:
+            type:
+              type: string
+              description: Type that states whether the schedule is a weekly OR monthly schedule
+            day:
+              type: string
+              description: Day of the week the schedule should run
+            weekofmonth:
+              type: string
+              description: Info that states the rank or position of the day in a month the schedule should run. Only applies to monthly type of schedule.
+            time:
+              type: string
+              description: Time of the day the schedule should run (24 hour format)
+            timezoneoffset:
+              type: string
+              description: Time Zone offset of the client (+02:00 OR -07:00)
+    lockSchedulePropertiesEntry:
+          type: object
+          properties:
+            type:
+              type: string
+              description: Type that states whether the schedule is a weekly OR monthly schedule
+            day:
+              type: string
+              description: Day of the week the schedule should run
+            weekofmonth:
+              type: string
+              description: Info that states the rank or position of the day in a month the schedule should run. Only applies to monthly type of schedule.
+            time:
+              type: string
+              description: Time of the day the schedule should run (24 hour format)
+            timezoneoffset:
+              type: string
+              description: Time Zone offset of the client (+02:00 OR -07:00)
+    relocationUpdateSchedulePropertiesEntry:
+          type: object
+          properties:
+            day:
+              type: string
+              description: Day of the week the schedule should run
+            weekofmonth:
+              type: string
+              description: Info that states the rank or position of the day in a month the schedule should run. Only available for monthly type of schedule.
+            time:
+              type: string
+              description: Time of the day the schedule should run (24 hour format)
+            timezoneoffset:
+              type: string
+              description: Time Zone offset of the client (+02:00 OR -07:00)
+    lockUpdateSchedulePropertiesEntry:
+          type: object
+          properties:
+            day:
+              type: string
+              description: Day of the week the schedule should run
+            weekofmonth:
+              type: string
+              description: Info that states the rank or position of the day in a month the schedule should run. Only available for monthly type of schedule.
+            time:
+              type: string
+              description: Time of the day the schedule should run (24 hour format)
+            timezoneoffset:
+              type: string
+              description: Time Zone offset of the client (+02:00 OR -07:00)
+    relocationCriteriaEntry:
+          type: object
+          properties:
+            type:
+              type: string
+              description: Type of file selection - All OR AgeBased
+            duration:
+              type: integer
+              description: Relocate files older than the selected unit. Range 1-10000.
+            period:
+              type: string
+              description: Unit for selecting files older than for relocation. Unit can be 'weeks' or 'months'.
+            basedon:
+              type: string
+              description: File detail based on which the file for relocation is to be selected. Can be based on 'version date', 'initial version date' or 'content modified date'.
+    lockCriteriaEntry:
+          type: object
+          properties:
+            type:
+              type: string
+              description: Type of file selection - All OR AgeBased
+            duration:
+              type: integer
+              description: Relocate files older than the selected unit. Range 1-10000.
+            period:
+              type: string
+              description: Unit for selecting files older than for relocation. Unit can be 'weeks' or 'months'.
+            basedon:
+              type: string
+              description: File detail based on which the file for relocation is to be selected. Can be based on 'version date', 'initial version date' or 'content modified date'.
+    lockScheduleInput:
+          type: object
+          properties:
+            name:
+              type: string
+              description: Name of the lock schedule
+            locksubfolder:
+              type: boolean
+              description: property would be set to true if sub folder should be locked if all files within it are locked.
+            folderid:
+              type: string
+              description: Id of folder selected for lock
+            scheduleproperties:
+              type: array
+              items:
+               $ref: '#/components/schemas/lockSchedulePropertiesEntry'
+               description: Array of schedule properties
+            criteria:
+              type: array
+              items:
+               $ref: '#/components/schemas/lockCriteriaEntry'
+               description: Array of file selection properties
+    downloadLink:
+      type: object
+      properties:
+        link:
+          type: string
+          description: >-
+            The value is a language-independent string. Its value is an
+            encrypted link for file download. Using this string, in the response the file can be downloaded.
+            The download link includes the token information which is validated.
+    nodeLink:
+      type: object
+      properties:
+        link:
+          type: string
+          description: link associated with node used to access preview
+          example: https://<<machinename>>/Openlab-Storage?noderef= id 
+  headers:
+    date:
+      schema:
+        type: string
+        format: date-time
+      description: >-
+        Timestamp the response was processed, based on the server's clock.
+      required: true
+    content-type:
+      schema:
+        type: string
+      required: true
+      description: The content type
+    content-encoding:
+      schema:
+        type: string
+      description: 'UTF-8 or as appropriate.'
+      required: true
+  responses:
+    nodes:
+      description: Successful operation
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              nodes:
+                type: array
+                items:
+                  $ref: '#/components/schemas/node'
+                description: Array of resources contained in the folder
+              total:
+                type: integer
+                description: The total number of resources in the folder
+                example: 1
+    fileComments:
+      description: Successful operation
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              filecomments:
+                type: array
+                items:
+                  $ref: '#/components/schemas/fileComment'
+                description: Array of comments associated with a file
+    esignatureReasons:
+      description: Successful operation
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              items:
+                type: array
+                items:
+                  $ref: '#/components/schemas/eSigReason'
+                description: Array of esignature reasons.
+          examples:
+            'All esignature reasons':
+              $ref: '#/components/examples/esignaturereasonslistexample' 
+            'No esignature reasons':
+              $ref: '#/components/examples/noesignaturereasonsexample' 
+    relocateentries:
+      description: Successful operation
+      content:
+        application/json:          
+          schema:
+            $ref: '#/components/schemas/relocateentry'
+          examples:
+            'All relocation requests':
+              $ref: '#/components/examples/relocaterequestlistexample' 
+            'No relocation requests':
+              $ref: '#/components/examples/norelocaterequestexample' 
+    lockentries:
+      description: Successful operation
+      content:
+        application/json:          
+          schema:
+            $ref: '#/components/schemas/lockentry'
+          examples:
+            'All relocation requests':
+              $ref: '#/components/examples/lockrequestlistexample' 
+            'No relocation requests':
+              $ref: '#/components/examples/nolockrequestexample' 
+    relocatescheduleslist:
+      description: Successful operation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/relocateallschedulesschema'  
+          examples:
+            'All relocation schedules':
+              $ref: '#/components/examples/relocateschedulelistexample' 
+            'No relocation schedules':
+              $ref: '#/components/examples/norelocateschedulesexample'  
+    lockscheduleslist:
+      description: Successful operation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/lockallschedulesschema'  
+          examples:
+            'All automatic lock schedules':
+              $ref: '#/components/examples/lockschedulelistexample' 
+            'No automatic lock schedules':
+              $ref: '#/components/examples/nolockschedulesexample' 
+    singlerelocatescheduleentry:
+      description: Successful operation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/relocatescheduleentryschema' 
+          examples:
+            Relocate-OnSchedule-All:
+              $ref: '#/components/examples/getrelocate-onschedule-all'
+            Relocate-OnSchedule-AgeBased:
+              $ref: '#/components/examples/getrelocate-onschedule-agebased'
+    singlelockscheduleentry:
+      description: Successful operation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/lockscheduleentryschema' 
+          examples:
+            Relocate-OnSchedule-All:
+              $ref: '#/components/examples/getlock-onschedule-all'
+            Relocate-OnSchedule-AgeBased:
+              $ref: '#/components/examples/getlock-onschedule-agebased'
+    relocateerrors:
+      description: Successful operation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/relocateerrorresponseschema'
+          examples:
+            'All relocation failed details':
+              $ref: '#/components/examples/relocateerrorslistexample' 
+            'No relocation failed':              
+              description: No relocation failed for this request id
+              value: []
+    lockerrors:
+      description: Successful operation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/lockerrorresponseschema'
+          examples:
+            'All lock failed details':
+              $ref: '#/components/examples/lockerrorslistexample' 
+            'No lock failed':              
+              description: No relocation failed for this request id
+              value: []
+    revisionItems:
+      description: Successful operation
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              items:
+                type: array
+                items:
+                  $ref: '#/components/schemas/revisionItem'
+                description: Array of resources containing information about file revisions.
+              total:
+                type: integer
+                description: The total number of revisions
+                example: 1
+    Successful:
+     description: Successful operation
+     content:
+       application/json:
+        schema:
+         type: object
+         properties:
+          id:
+           type: string
+           description: ID of the resource on which the operation was performed.
+           example: 1e3b4b70-0b88-4fb2-a48c-b2d72411147a
+    Created:
+      description: >-
+        Returned when the request has succeeded and a new resource has been
+        created as a result
+      headers:
+        Location:
+          schema:
+            type: string
+          description: The physical location of the created resource.
+        Content-enconding:
+          $ref: '#/components/headers/content-encoding'
+        Content-Type:
+          $ref: '#/components/headers/content-type'
+        Date:
+          $ref: '#/components/headers/date'
+    CommentCreated:
+      description: >-
+        Returned when the request has succeeded and a new resource has been
+        created as a result
+    NoContent:
+      description: >-
+        Returned when the request has succeeded but response does not include
+        any entity
+    BadRequest:
+      description: Cannot process the request because it is malformed or incorrect
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: parameters.cant.be.parsed
+            message: 'Invalid input parameter: <parameter_name>.'
+    ScheduleNameConflict:
+      description: Returned when request conflicts with current state of the target resource
+      content:
+        application/json-schedule name not unique:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: schedule.name.not.unique
+            message: 'Schedule name <schedulename> is not unique. Schedule names must be unique.'
+    BadRequestStorage:
+      description: Cannot process the request because it is malformed or incorrect
+      content:
+        application/json-default:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: parameters.cant.be.parsed
+            message: 'Invalid input parameter: <parameter_name>.'
+        application/json-location not specified in configuration:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: parameters.cant.be.parsed
+            message: 'Invalid storage configuration input - There should be one storage location in storage configuration.'
+        application/json-invalid storage name:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: invalid.storage.name
+            message: 'Invalid storage name. Storage name cannot be empty.'
+        application/json-storage name limit exceed:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: storage.name.limit.exceeded
+            message: 'Name is too long. Storage name cannot contain more than 255 characters.'
+        application/json-special char:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: special.chars.not.valid
+            message: 'Storage name contains one or more invalid characters. The characters \ / : | * ? < > cannot be used in a storage name.'
+        application/json-storage name not unique:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: storage.name.not.unique
+            message: 'Storage name <storagename> is not unique. Storage location names must be unique.'
+        application/json-drive does not exist:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: drive.does.not.exist
+            message: 'Invalid request. Drive <drivename> does not exist.'
+    BadRequestFilesetDownload:
+      description: Cannot process the request because it is malformed or incorrect
+      content:
+        application/json-default:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: parameters.cant.be.parsed
+            message: 'Invalid input parameter: <parameter_name>.'
+        application/json-duplicate Ids:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: duplicate.fileset.input.id
+            message: 'Unable to download. One or more duplicate filset input ids.'
+    BadRequestDownload:
+      description: Cannot process the request because it is malformed or incorrect
+      content:
+        application/json-default:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: parameters.cant.be.parsed
+            message: 'Invalid input parameter: <parameter_name>.'
+        application/json-duplicate Ids:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: duplicate.input.ids
+            message: 'Unable to download. One or more duplicate node input ids.'
+    BadRequestAddFolder:
+      description: Cannot process the request because it is malformed or incorrect
+      content:
+        application/json1:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: parameters.cant.be.parsed
+            message: 'Invalid input parameter: <parametername>.'
+        application/json2:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: special.chars.not.valid
+            message: 'Name contains one or more invalid characters. The characters \ / : | * ? < > cannot be used in folder names.'
+        application/json3:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: folder.name.limit.exceeded
+            message: 'Name is too long. Folder names cannot contain more than 255 characters.'
+    NotFoundAddFolder:
+      description: Cannot process the request because it is malformed or incorrect
+      content:
+        FolderNotFound:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: file.or.folder.not.found
+            message: 'File or Folder not found.'
+        RootNotFound:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: root.not.found
+            message: 'Root node Id not found.'
+    Unauthorized:
+      description: >-
+        Returned when the access token provided in the Authorization header is
+        not recognized or not provided
+      content:
+        application/json-Unauthorized:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: InvalidToken
+            message: 'There is no user corresponding to this access token.'
+        application/json-MalformedToken:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: InvalidToken
+            message: 'The access token was not correctly encoded.'
+    Forbidden:
+      description: Returned if the user does not have required permission to perform the operation
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: miss.permi.<action_identifier>
+            message: 'You do not have permission to perform this action. Please contact your system administrator.'
+    ForbiddenAddFolder:
+      description: Returned if the user does not have required permission to perform the operation
+      content:
+        NoPermission:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: miss.permi.<action_identifier>
+            message: 'You do not have permission to perform this action. Please contact your system administrator.'
+        NodeLocked:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: file.or.folder.locked
+            message: 'The operation cannot be performed. Node <id> is locked.'
+    UploadForbidden:
+      description: Returned if the user does not have required permission to perform the operation
+      content:
+        application/json-File Locked:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: file.or.folder.locked
+            message: 'File is locked. Updates not allowed.'
+        application/json-Folder Locked:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: file.or.folder.locked
+            message: 'The operation cannot be performed. Node folderId is locked.'
+        application/json-FileType not supported:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: file.not.supported
+            message: '<filename>: File type is not supported.'
+    NotFound:
+      description: Returned when the specified resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: file.or.folder.not.found
+            message: 'File or Folder not found.'
+    ScheduleNotFound:
+      description: Returned when the specified resource was not found
+      content:
+        application/json:
+          schema:   
+            $ref: '#/components/schemas/error'
+          example:
+            code: schedule.not.found
+            message: 'Schedule with id {0} not found.'
+    NotFoundFileset:
+      description: Returned when the specified resource was not found
+      content:
+        application/json-default:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: file.or.folder.not.found
+            message: 'File or Folder not found.'
+        application/json-mfx not found:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: fileset.mfx.info.not.found
+            message: 'Unable to download fileset. No info found for MFX associated to fileset.'
+    Conflict:
+      description:  Returned when request conflicts with current state of the target resource
+      content:
+        application/json 1:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: root.folder.cannot.be.deleted
+            message: 'Root folder deletion not allowed.'
+        application/json 2:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: file.or.folder.cannot.be.deleted
+            message: 'Could not delete file or folder.'    
+    UploadConflict:
+      description:  Returned when request conflicts with current state of the target resource
+      content:
+        application/json-node with same name exists:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: name.already.exists
+            message: 'Name already exists. Please choose a different name.'
+        application/json-simultaneous upload - file exists:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: file.exists
+            message: 'Unable to process upload operation. Please retry.'
+        application/json-property with different datatype exists:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: file.property.datatype.conflict
+            message: 'File property <property_name> already exists with datatype of <datatype>.'
+        application/json-checkout by another user:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: file.checkedout.by.another.user
+            message: "The file: <filename> is currently checked out to another user and may not be updated."
+    CopyConflict:
+     description: Returned when request conflicts with current state of the target resource
+     content:
+       application/json 1:
+         schema:
+           $ref: '#/components/schemas/error'
+         example:
+           code: file.or.folder.archived
+           message: 'Cannot move or copy folder or file to an archived destination.'
+       application/json 2:
+         schema:
+           $ref: '#/components/schemas/error'
+         example:
+           code: root.cannot.be.copied
+           message: 'Cannot move or copy the root folder.'
+       application/json 3:
+         schema:
+           $ref: '#/components/schemas/error'
+         example:
+           code: destination.must.be.folder
+           message: 'Invalid input: Destination should be a folder.'
+       application/json 4:
+         schema:
+           $ref: '#/components/schemas/error'
+         example:
+           code: destination.cannot.be.child.of.source
+           message: 'The destination folder is subfolder of the source folder.'
+       application/json 5:
+         schema:
+           $ref: '#/components/schemas/error'
+         example:
+           code: file.or.folder.exists
+           message: 'The specified folder or file already exists in the specified parent folder.'
+       application/json 6:
+         schema:
+           $ref: '#/components/schemas/error'
+         example:
+           code: old.file.version
+           message: 'The operation cannot be performed on older version of the file.'
+    MoveConflict:
+     description: Returned when request conflicts with current state of the target resource
+     content:
+       application/json 1:
+         schema:
+           $ref: '#/components/schemas/error'
+         example:
+           code: file.or.folder.archived
+           message: 'Cannot move or copy folder or file to an archived destination.'
+       application/json 2:
+         schema:
+           $ref: '#/components/schemas/error'
+         example:
+           code: root.cannot.be.moved.
+           message: 'Cannot move or copy the root folder.'
+       application/json 3:
+         schema:
+           $ref: '#/components/schemas/error'
+         example:
+           code: destination.must.be.folder
+           message: 'Invalid input: Destination should be a folder.'
+       application/json 4:
+         schema:
+           $ref: '#/components/schemas/error'
+         example:
+           code: destination.cannot.be.child.of.source
+           message: 'The destination folder is subfolder of the source folder.'
+       application/json 5:
+         schema:
+           $ref: '#/components/schemas/error'
+         example:
+           code: file.or.folder.exists
+           message: 'The specified folder or file already exists in the specified parent folder.'
+       application/json 6:
+         schema:
+           $ref: '#/components/schemas/error'
+         example:
+           code: old.file.version
+           message: 'The operation cannot be performed on older version of the file.'   
+    CheckinConflict:
+      description:  Returned when request conflicts with current state of the target resource
+      content:
+        application/json 1:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: file.must.checkedout
+            message: "Unable to check in file. File '<filename>' is not checked out."
+        application/json 2:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: file.checkedout.by.another.user
+            message: "The file: <filename> is currently checked out to another user and may not be updated."
+    UndoCheckoutConflict:
+      description:  Returned when request conflicts with current state of the target resource
+      content:
+        application/json 1:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: file.must.checkedout
+            message: 'File not checked out.'
+        application/json 2:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: file.checkedout.by.another.user   
+            message: 'File checked out by another user.'
+    CheckoutConflict:
+      description:  Returned when request conflicts with current state of the target resource
+      content:
+        application/json 1:
+            schema:
+              $ref: '#/components/schemas/error'
+            example:
+              code: file.already.checkedout.by.current.user
+              message: "File '<filename>' is already checked out by user '<username>'."
+        #application/json 3:
+        #    schema:
+        #       $ref: '#/components/schemas/error'
+        #    example:
+        #       code: file.locked.cannot.checkout
+        #       message: "File '<filename>' is currently locked and may not be updated."
+        application/json 2:
+            schema:
+              $ref: '#/components/schemas/error'
+            example:
+              code: file.checkedout.by.another.user
+              message: "The file: <filename> is currently checked out to another user and may not be updated."  
+    StorageNotFound:
+      description: Returned when the specified resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: storageconfig.not.found
+            message: 'Storage configuration not found.'
+    UnprocessableEntityAddStorage:
+      description: Returned when the server understands the content type of the request entity, and the syntax of the request entity is correct, but it was unable to process the contained instructions.
+      content:
+        application/json-no main storage exist:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: parameters.cant.be.parsed
+            message: 'There is no main storage location defined, and a main storage location is required. Please set this location as the main storage location.'    
+    UnprocessableEntityUpdateStorage:
+      description: Returned when the server understands the content type of the request entity, and the syntax of the request entity is correct, but it was unable to process the contained instructions.
+      content:
+        application/json-configuration update failed:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: parameters.cant.be.parsed
+            message: 'Configuration update failed - Storage type or Content type update not supported.'   
+        application/json-no main storage exist:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: parameters.cant.be.parsed
+            message: 'There is no main storage location defined, and a main storage location is required. Please set this location as the main storage location.'    
+    UnprocessableEntityFileSetSingleAPI:
+      description: Returned when the server understands the content type of the request entity, and the syntax of the request entity is correct, but it was unable to process the contained instructions.
+      content:
+        application/json-not a fileset:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: unable.to.download.not.fileset
+            message: 'Unable to download. One or more items are not file sets.'
+        application/json-same version fileset:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: unable.to.download.fileset
+            message: 'Invalid input. Request for different version of same file set.'
+        application/json-invalid mfx:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: invalid.mfx.file
+            message: 'Unable to download fileset. The MFX file associated to fileset is invalid.'
+    UnprocessableEntityFileSet:
+      description: Returned when the server understands the content type of the request entity, and the syntax of the request entity is correct, but it was unable to process the contained instructions.
+      content:
+        application/json-not a fileset:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: unable.to.download.not.fileset
+            message: 'Unable to download. One or more items are not file sets.'
+        application/json-same version fileset:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: unable.to.download.fileset
+            message: 'Invalid input. Request for different version of same file set.'
+    UnprocessableEntityStreamAPI:
+      description: Returned when the server understands the content type of the request entity, and the syntax of the request entity is correct, but it was unable to process the contained instructions.
+      content:
+        application/json-invalid mfx:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: invalid.mfx.file
+            message: 'Unable to download fileset. The MFX file associated to fileset is invalid.'
+    InternalError:
+      description: An unexpected error. For debugging and logging purposes
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: call.sys.admin
+            message: 'Please contact the system administrator.'
+    InternalErrorDownload:
+      description: An unexpected error. For debugging and logging purposes
+      content:
+        application/json-default:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: call.sys.admin
+            message: 'Please contact the system administrator.'
+        application/json-physical file not found:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: file.or.folder.not.found
+            message: 'Could not find part of the path: <file_path>.'
+        application/json-storage location not found:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: storage.location.not.found
+            message: 'Storage location not found. Please try again, or see your system administrator.'
+    InternalErrorFilesetDownload:
+      description: An unexpected error. For debugging and logging purposes
+      content:
+        application/json-default:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: call.sys.admin
+            message: 'Please contact the system administrator.'
+        application/json-storage location not found:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: storage.location.not.found
+            message: 'Storage location not found. Please try again, or see your system administrator.'
+    InternalErrorUpload:
+      description: An unexpected error. For debugging and logging purposes
+      content:
+        application/json-default:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: call.sys.admin
+            message: 'Please contact the system administrator.'
+        application/json-nodiskspace:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: no.space.on.disk
+            message: 'There is not enough space on the disk.'
+        application/json-networkpathnotfound:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: network.path.not.found
+            message: 'The network path was not found.'
+        application/json-storageconfignotfound:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: storage.config.not.found
+            message: 'Unable to locate primary storage location. Cannot save file.'
+    InternalError-AllExamples:
+      description: An unexpected error. For debugging and logging purposes
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          examples:
+            'internal server error - general':
+                  $ref: '#/components/examples/internalservererror-general'
+            'internal server error - OLSS':
+                  $ref: '#/components/examples/internalservererror-OLSS'
+    ArchiveConflict:
+      description:  Returned when request conflicts with current state of the target resource
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/error'
+          example:
+            code: file.already.archived
+            message: 'The file: file name is already archived.'
+    CopyResponses:
+      description: Returned when request a node is successfully or partially copied to the destination.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/copyResponseSchema'
+          examples:
+            single file copy:
+              $ref: '#/components/examples/successful-file-copy'
+            single folder copy:
+              $ref: '#/components/examples/successful-folder-copy'
+            single file copy failed:
+              $ref: '#/components/examples/failed-singlefile-copy'
+            folder copy - partial failure:
+              $ref: '#/components/examples/failed-singlefolder-copy'
+    LockResponses:
+      description: Returned when request a node is successfully locked or contains files or folders which are already locked
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/lockResponseSchema'
+          examples:
+            single file lock:
+              $ref: '#/components/examples/successful-file-lock'
+            single folder lock:
+              $ref: '#/components/examples/successful-folder-lock'
+            folder lock - partial failure:
+              $ref: '#/components/examples/failed-singlefolder-lock'
+    UnlockResponses:
+      description: Returned when request a node is successfully unlocked or contains files or folders which are already unlocked
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/unlockResponseSchema'
+          examples:
+            single file unlock:
+              $ref: '#/components/examples/successful-file-unlock'
+            single folder unlock:
+              $ref: '#/components/examples/successful-folder-unlock'
+            folder unlock - partial failure:
+              $ref: '#/components/examples/failed-singlefolder-unlock'
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: TBD
+  examples:
+     internalservererror-general:   
+      description: An unexpected error. For debugging and logging purposes
+      value:
+        - code: call.sys.admin
+          message: 'Please contact the system administrator.' 
+     internalservererror-OLSS:   
+      description: An unexpected error. For debugging and logging purposes
+      value:
+        - code: InternalServerError
+          message: 'The requested resource is unreachable.'
+     fullPath-file:   
+      description: Full path of the file including the file name to be downloaded when 'root' is specified in the path
+      value: '/Folder1/Folder2/sub/File1.txt' 
+     fullPath-folder:   
+      description: Full path of the folder on which the operation is to be performed when 'root' is specified in the path.
+      value: '/Folder1/Folder2'
+     fullPath-folder-upload:   
+      description: Full path of the folder where the file is to be uploaded when 'root' is specified in the id
+      value: '/Folder1/Folder2'
+     newFolderName:   
+      description: New name for an existing folder to be renamed to.
+      value: 'NewFolderName'
+     fullPath-folderCreation:   
+      description: Full folder path that needs to be created when 'root' is specified in the id. All folder names found missing will be created.
+      value: '/Folder1/Folder2/subFolder'
+     fullPath-root-upload:   
+      description: When the file is to be uploaded at root level when 'root' is specified in the id
+      value: '/'
+     file-extensions:   
+      description: Successful operation
+      value:
+        - allowedFileExtensions: 
+            [
+              ".pdf" ,
+              ".rpt"
+            ]                     
+          blockedFileExtensions: 
+            [
+              ".bat" ,
+              ".exe"
+            ]
+     file-extensions-empty:   
+      description: Successful operation
+      value:
+        - allowedFileExtensions: 
+            [
+            ]                     
+          blockedFileExtensions: 
+            [
+            ]
+     storage-add-filesystem:   
+      description: Successful operation
+      value:
+        storageType: filesystem
+        active: true
+        isPrimary: true
+        storageProperties:
+            - key: "location"
+              value: "c:\\test"
+     storage-add-aws-nonec2props:   
+      description: Successful operation
+      value:
+        storageType: aws
+        active: true
+        isPrimary: true
+        storageProperties:
+            - key: "location"
+              value: "Folder1"
+            - key: "region"
+              value: "us-west-2"
+            - key: "bucketname"
+              value: "XXXXXXXX"
+            - key: "accesskey"
+              value: "YYYYYYYY"
+            - key: "securitykey"
+              value: "ZZZZZZZZZ" 
+            - key: "isawsec2"
+              value: "false" 
+     storage-add-aws-ec2requiredprops:   
+      description: Successful operation
+      value:
+        storageType: aws
+        active: true
+        isprimary: true
+        storageProperties:
+            - key: "location"
+              value: "Folder1"
+            - key: "region"
+              value: "us-west-2"
+            - key: "bucketname"
+              value: "XXXXXXXX"  
+            - key: "isawsec2"
+              value: "true" 
+     storage-update-filesystem:   
+      description: Successful operation
+      value:
+        storageType: filesystem
+        active: true
+        isprimary: true
+        storageProperties:
+            - key: "location"
+              value: "c:\\test"
+     storage-update-aws-ec2requiredprops:   
+      description: Successful operation
+      value:
+        storageType: aws
+        active: true
+        isprimary: true
+        storageProperties:
+            - key: "location"
+              value: "Folder1"
+            - key: "region"
+              value: "us-west-2"
+            - key: "bucketname"
+              value: "XXXXXXXX" 
+            - key: "isawsec2"
+              value: "true" 
+     storage-update-aws-nonec2props:   
+      description: Successful operation
+      value:
+        storageType: aws
+        active: true
+        isprimary: true
+        storageProperties:
+            - key: "location"
+              value: "Folder1"
+            - key: "region"
+              value: "us-west-2"
+            - key: "bucketname"
+              value: "XXXXXXXX"
+            - key: "accesskey"
+              value: "YYYYYYYY"
+            - key: "securitykey"
+              value: "ZZZZZZZZZ" 
+            - key: "isawsec2"
+              value: "false" 
+     storage-update-aws-nonec2props-nocreds:   
+      description: Successful operation
+      value:
+        storageType: aws
+        active: true
+        isprimary: true
+        storageProperties:
+            - key: "location"
+              value: "Folder1"
+            - key: "region"
+              value: "us-west-2"
+            - key: "bucketname"
+              value: "XXXXXXXX"
+            - key: "isawsec2"
+              value: "false" 
+     full-file-info-example:
+      description: A full response contains all available information.values under m will depend on properties defined in NodeProperties table
+      value:
+        id: 3484179e-3542-4a24-b973-512e9ab23eaf
+        path: /project/results/result.ssizip
+        kind: file
+        linkedBy: 51774834-6479-4782-ac03-a03a40fbff9f
+        size: 3
+        isFileSet: true
+        isLatestRevision: true
+        state: 
+          readOnly: false
+          archived: false
+          checkedOut: true
+          inProcess: false
+          pendingCheckout: false
+        name: result.ssizip
+        initialVersionDate: '2019-11-17T00:11:22.333Z'
+        contentModifiedDate: '2019-11-17T00:22:33.444Z'
+        checkedOutBy: 'admin'
+        parentId: 1234179e-3542-4a24-b973-512e9ab23eaf
+        eSig:
+          - signer: admin
+            reason: I am approving this document
+            signDate: '2020-09-10T15:43:14.026Z'    
+        m:
+          "uploadReason" : "This file will be uploaded"
+          "archivedBy" : "admin"
+          "checksum" : "02cda2e8f7663ebc61bc53854f9d9830"
+     nodes-exists-example:
+       description: Response when the specified node exists. Includes id, node exists and kind only
+       value:
+         id: 51774834-6479-4782-ac03-a03a40fbff9f
+         isNodePresent: true
+         kind: file  
+     nodes-doesnotexists-example:
+       description: Response when the specified node does not exist. Includes id, node exists and kind only
+       value:
+         id: 51774834-6479-4782-ac03-a03a40fbff9f
+         isNodePresent: false
+         kind: folder  
+     short-file-info-example:
+      description: >-
+        A short response contains id, name and kind only, because
+        **select=name, kind**.
+      value:
+        id: 3484179e-3542-4a24-b973-512e9ab23eaf
+        name: result.ssizip
+        kind: file
+     shortest-file-info-example:
+      description: >-
+        The shortest response contains only id. This can be considered as a way
+        to get an ID by specified path
+      value:
+        id: 3484179e-3542-4a24-b973-512e9ab23eaf
+     successful-file-copy:   
+       description: Successful operation
+       value:
+         nodeId: 4484179e-3542-4a24-b973-512e9ab26eaf
+         message: File 'File1.txt' was copied from '/TestFolder' to '/Folder1/subfolder'.
+         actionfailureInfo:
+           - 
+     successful-folder-copy:   
+       description: Successful operation
+       value:
+         nodeId: 4484179e-3542-4a24-b973-512e9ab26eaf
+         message: Folder 'Folder4' was copied from '/TestFolder' to '/Folder1/subfolder'.
+         actionfailureInfo:
+           - 
+     failed-singlefile-copy:   
+       description: File failed to copy to destination
+       value:
+         code: file.or.folder.not.found
+         message: 'Could not find part of the path: C:\SStorage\Content\OpenLab\22\031712\{15BB22C4-305A-442E-930F-BF259EC2A419}\c3bb8906acd045648963a65c20ea9e71.'
+         localizedMessage: 'Could not find part of the path: C:\SStorage\Content\OpenLab\22\031712\{15BB22C4-305A-442E-930F-BF259EC2A419}\c3bb8906acd045648963a65c20ea9e71.'
+     failed-singlefolder-copy:   
+       description: Folder copy partially succeeded.
+       value:
+         nodeId: 4484179e-3542-4a24-b973-512e9ab26eaf
+         message: Folder 'Folder4' was copied from '/TestFolder' to '/Folder1/subfolder'.
+         actionfailureInfo:
+           - id: 283777af-2dd4-420d-a07f-86c5161335d1
+             code: file.or.folder.not.found
+             errorMessage: 'Could not find part of the path: C:\SStorage\Content\OpenLab\22\031712\{15BB22C4-305A-442E-930F-BF259EC2A419}\c3bb8906acd045648963a65c20ea9e71.'
+             localizedMessage: 'Could not find part of the path: C:\SStorage\Content\OpenLab\22\031712\{15BB22C4-305A-442E-930F-BF259EC2A419}\c3bb8906acd045648963a65c20ea9e71.'
+           - id: 80e63057-58f4-4aa6-8e21-29e688126edf
+             code: no.space.on.disk
+             errorMessage: 'There is not enough space on the disk.'
+             localizedMessage: 'There is not enough space on the disk.'
+     successful-file-lock:   
+       description: Successful operation
+       value:
+         nodeId: 4484179e-3542-4a24-b973-512e9ab26eaf
+         message: File 'File1.txt' was locked
+         actionfailureInfo:
+           - 
+     successful-folder-lock:   
+       description: Successful operation
+       value:
+         nodeId: 4484179e-3542-4a24-b973-512e9ab26eaf
+         message: Folder 'Folder4' was locked
+         actionfailureInfo:
+           - 
+     failed-singlefolder-lock:   
+       description: Successful operation
+       value:
+         nodeId: 4484179e-3542-4a24-b973-512e9ab26eaf
+         message: Folder 'Folder4' was locked.
+         actionfailureInfo:
+           - id: 283777af-2dd4-420d-a07f-86c5161335d1
+             code: file.already.locked
+             errorMessage: 'File was already locked.'
+             localizedMessage: 'File was already locked.'
+     successful-file-unlock:   
+       description: Successful operation
+       value:
+         nodeId: 4484179e-3542-4a24-b973-512e9ab26eaf
+         message: File 'File1.txt' was unlocked
+         actionfailureInfo:
+           - 
+     successful-folder-unlock:   
+       description: Successful operation
+       value:
+         nodeId: 4484179e-3542-4a24-b973-512e9ab26eaf
+         message: Folder 'Folder4' was unlocked
+         actionfailureInfo:
+           - 
+     failed-singlefolder-unlock:   
+       description: Successful operation
+       value:
+         nodeId: 4484179e-3542-4a24-b973-512e9ab26eaf
+         message: Folder 'Folder4' was unlocked.
+         actionfailureInfo:
+           - id: 283777af-2dd4-420d-a07f-86c5161335d1
+             code: file.already.locked
+             errorMessage: 'File was already unlocked.'
+             localizedMessage: 'File was already unlocked.'
+     relocate-onschedule-all:   
+       description: Relocate folder on a schedule with all files.
+       value:
+         schedulename: 'Weekly Data Relocation Schedule'
+         folderid: cf699839-c695-4524-8e88-082945c7b687
+         storageid: 1e3b4b70-0b88-4fb2-a48c-b2d72411147a
+         scheduletype: 'scheduled'  
+         scheduleproperties:
+           - type: 'weekly'
+             day: 'sunday'
+             time: "00:00"
+             timezoneoffset: "+05:30"
+         criteria:
+           - type: 'all'
+     relocate-onschedule-agebased:   
+       description: Relocate folder on a schedule with files selected based on given criteria.
+       value:
+         schedulename: 'Monthly Data Relocation Schedule'
+         folderid: cf699839-c695-4524-8e88-082945c7b687
+         storageid: 1e3b4b70-0b88-4fb2-a48c-b2d72411147a  
+         scheduletype: 'scheduled'
+         scheduleproperties:
+           - type: 'monthly'
+             day: 'saturday'
+             weekofmonth: 'first'
+             time: "01:00"
+             timezoneoffset: "+05:30"
+         criteria:
+           - type: 'agebased'
+             duration: 3 
+             period: 'weeks'
+             basedon: 'version date'
+     lock-onschedule-all:   
+       description: lock folder on a schedule with all files.
+       value:
+         schedulename: 'Weekly Data lock Schedule'
+         folderid: cf699839-c695-4524-8e88-082945c7b687
+         locksubfolder: true
+         scheduleproperties:
+           - type: 'weekly'
+             day: 'sunday'
+             time: "00:00"
+             timezoneoffset: "+05:30"
+         criteria:
+           - type: 'all'
+     lock-onschedule-agebased:   
+       description: lock folder on a schedule with files selected based on given criteria.
+       value:
+         schedulename: 'Monthly Data Relocation Schedule'
+         folderid: cf699839-c695-4524-8e88-082945c7b687
+         locksubfolder: true
+         scheduleproperties:
+           - type: 'monthly'
+             day: 'saturday'
+             weekofmonth: 'first'
+             time: "01:00"
+             timezoneoffset: "-07:00"
+         criteria:
+           - type: 'agebased'
+             duration: 3 
+             period: 'weeks'
+             basedon: 'version date'
+     getrelocate-onschedule-all:   
+       description: Relocate folder on a schedule with all files.
+       value:
+         relocationtype: 'Scheduled'
+         schedulename: 'Weekly Data Relocation Schedule'
+         submitteddate: 2022-11-25 13:45:27.629829+05:30
+         submittedby: 'admin'
+         nextruntime: 2022-11-25 13:45:27.629829+05:30
+         scheduleproperties:
+           - type: 'Weekly'
+             day: 'Sunday'
+             time: "00:00"
+         folderpath: "/Document/Reports"
+         deststoragename: "storage 2"
+         criteria:
+           - type: 'all'
+     getrelocate-onschedule-agebased:   
+       description: Relocate folder on a schedule with files selected based on given criteria.
+       value:
+         relocationtype: 'Scheduled'
+         schedulename: 'Monthly Data Relocation Schedule'
+         submitteddate: 2022-11-25 13:45:27.629829+05:30
+         submittedby: 'admin'
+         nextruntime: 2022-11-25 13:45:27.629829+05:30
+         scheduleproperties:
+           - type: 'Monthly'
+             day: 'Saturday'
+             weekofmonth: 'first'
+             time: "01:00"
+         folderpath: "/Document/Reports"
+         deststoragename: 'ContentStorageA'
+         criteria:
+           - type: 'agebased'
+             duration: 2 
+             period: 'months'
+             basedon: 'content modified date'
+     getlock-onschedule-all:   
+       description: Lock folder on a schedule with all nodes.
+       value:
+         schedulename: 'Weekly Data Lock Schedule'
+         submitteddate: 2022-11-25 13:45:27.629829+05:30
+         submittedby: 'admin'
+         folderpath: "/project/results"
+         locksubfolder: true
+         criteria:
+           - type: 'all'
+         scheduleproperties:
+           - type: 'Weekly'
+             day: 'Sunday'
+             time: "00:00"
+         nextruntime: 2023-08-16 13:45:27.629829+05:30
+         lastruntime: 2023-08-09 13:45:27.629829+05:30
+         processingstatus:
+           - errorcount: 3
+             state: 
+               - completed: true
+                 pending: false
+                 inprogress: false
+                 resubmitted: false 
+     getlock-onschedule-agebased:   
+       description: Lock folder on a schedule with nodes selected based on given criteria.
+       value:
+         schedulename: 'Monthly Data Lock Schedule'
+         submitteddate: 2022-11-25 13:45:27.629829+05:30
+         submittedby: 'admin'
+         folderpath: "/project/results"
+         locksubfolder: false
+         criteria:
+           - type: 'agebased'
+             duration: 2 
+             period: 'months'
+             basedon: 'content modified date'
+         scheduleproperties:
+           - type: 'Monthly'
+             day: 'Saturday'
+             weekofmonth: 'first'
+             time: "01:00"
+         nextruntime: 2023-08-16 13:45:27.629829+05:30
+         lastruntime: 2023-08-09 13:45:27.629829+05:30
+         processingstatus:
+           - errorcount: 3
+             state: 
+               - completed: true
+                 pending: false
+                 inprogress: false
+                 resubmitted: false  
+     relocate-now-all2:   
+       description: Relocate folder on a schedule with all files.
+       value:
+         folderid: cf699839-c695-4524-8e88-082945c7b687
+         storageid: 1e3b4b70-0b88-4fb2-a48c-b2d72411147a
+         scheduletype: 'now'
+         criteria:
+           - type: 'all'
+     relocate-now-agebased2:   
+       description: Relocate folder on a schedule with files selected based on given criteria.
+       value:
+         folderid: cf699839-c695-4524-8e88-082945c7b687
+         storageid: 1e3b4b70-0b88-4fb2-a48c-b2d72411147a  
+         scheduletype: 'now'
+         criteria:
+           - type: 'agebased'
+             duration: 1 
+             period: 'weeks'
+             basedon: 'content modified date'
+     relocate-onschedule-all-update:   
+       description: Edit an existing relocation request for a schedule with all files.
+       value:
+         storageid: 1e3b4b70-0b88-4fb2-a48c-b2d72411147a  
+         scheduleproperties:
+           - type: 'weekly'
+             day: 'sunday'
+             time: "00:00"
+             timezoneoffset: "+05:30"
+         criteria:
+           - type: 'all'
+     lock-onschedule-all-update:   
+       description: Edit an existing lock request for a schedule with all nodes.
+       value:
+         locksubfolder: true
+         scheduleproperties:
+           - type: 'weekly'
+             day: 'sunday'
+             time: "00:00"
+             timezoneoffset: "+05:30"
+         criteria:
+           - type: 'all'
+     relocate-onschedule-agebased-update:   
+       description: Edit an existing relocation request for a schedule with files selected based on given criteria.
+       value:
+         storageid: 1e3b4b70-0b88-4fb2-a48c-b2d72411147a  
+         scheduleproperties:
+           - type: 'monthly'
+             day: 'saturday'
+             weekofmonth: 'first'
+             time: "01:00"
+             timezoneoffset: "-02:00"
+         criteria:
+           - type: 'agebased'
+             duration: 4 
+             period: 'weeks'
+             basedon: 'initial version date'
+     lock-onschedule-agebased-update:   
+       description: Edit an existing lock request for a schedule with nodes selected based on given criteria.
+       value:
+         locksubfolder: false
+         scheduleproperties:
+           - type: 'monthly'
+             day: 'saturday'
+             weekofmonth: 'first'
+             time: "01:00"
+             timezoneoffset: "+02:00"
+         criteria:
+           - type: 'agebased'
+             duration: 4 
+             period: 'weeks'
+             basedon: 'initial version date'
+     norelocateschedulesexample:
+       description: No scheduled relocation requests submitted
+       value: []
+     nolockschedulesexample:
+       description: No scheduled lock requests submitted
+       value: []
+     norelocaterequestexample:
+       description: No relocation requests submitted
+       value: []
+     nolockrequestexample:
+       description: No lock requests submitted
+       value: []
+     norelocateerrorssexample:
+       description: No relocation failed for this request id
+       value: []
+     noesignaturereasonsexample:
+       description: No esignature reasons
+       value:
+        - No esignature reason configured.
+     relocateschedulelistexample:
+       description: List of all failed to relocate file details
+       value:
+        - scheduleid: 3484179e-3542-4a24-b973-512e9ab23eaf
+          schedulename: 'Weekly Data Relocation Schedule'
+          folderpath: '/Document/Reports'
+          deststoragename: "storage 2"
+          frequency: 'Weekly'          
+          criteria:
+            - type: 'agebased'
+              duration: 2 
+              period: 'months'
+              basedon: 'version date'
+        - scheduleid: 6936100e-8956-3a10-b672-512e9ab77eaf
+          schedulename: 'Weekly Data Relocation Schedule'
+          folderpath: '/Document/Reports'
+          deststoragename: 'ContentStorageB'
+          frequency: 'Monthly'          
+          criteria:
+            - type: 'all'
+     lockschedulelistexample:
+       description: List of all failed to lock node details
+       value:
+        - scheduleid: 3484179e-3542-4a24-b973-512e9ab23eaf
+          schedulename: 'Weekly Data Lock Schedule'
+          folderpath: '/Document/Reports'
+          locksubfolder: true
+          frequency: 'Weekly'          
+          criteria:
+            - type: 'agebased'
+              duration: 2 
+              period: 'months'
+              basedon: 'version date'
+          processingstatus:
+            - errorcount: 3
+              state: 
+                - completed: true
+                  pending: false
+                  inprogress: false
+                  resubmitted: false
+        - scheduleid: 6936100e-8956-3a10-b672-512e9ab77eaf
+          schedulename: 'Monthly Data Lock Schedule'
+          folderpath: '/Document/Reports'
+          locksubfolder: false
+          frequency: 'Monthly'          
+          criteria:
+            - type: 'all'
+          processingstatus:
+            - errorcount: 3
+              state: 
+                - completed: true
+                  pending: false
+                  inprogress: false
+                  resubmitted: false
+     relocateerrorslistexample:
+       description: List of all scheduled relocation requests submitted
+       value:
+         - relocaterequestqueueid: 5689320e-2390-2a12-b666-256e9ab45eaf
+           deststoragename: Storage 2
+           submitteddate: 2022-12-02 11:20:19.533234+05:30
+           submittedby: 'admin (admin)'
+           relocateerrorentry:
+             - virtualfilepath: /project/results/results.ssizip
+               physicalfilepath: C:\SStorage\Content\OpenLab\22\053012\{02B7B639-8A37-487E-8490-6CA095AE695A}\1ecc39bb5cfa41c491f6078be325c25a
+               sourcestoragename: Storage 1
+               errormessage: File not found.
+             - virtualfilepath: /project/results/report.mfx
+               physicalfilepath: C:\SStorage\Content\OpenLab\22\053016\{3484179e-3542-4a24-b973-512e9ab23eaf}\5689320e23902a12b666256e9ab45eaf
+               sourcestoragename: Storage 1
+               errormessage: File not found.
+     lockerrorslistexample:
+       description: List of all scheduled lock requests submitted
+       value:
+         - submitteddate: 2022-11-25 13:45:27.629829+05:30
+           submittedby: admin (admin)  
+           lockerrorentry:
+             - virtualfilepath: /project/results/results.ssizip
+               errormessage: File not found.
+             - virtualfilepath: /project/results/report.mfx
+               errormessage: File not found.
+     relocaterequestlistexample:
+       description: List of all relocation requests currently submitted and queued for processing
+       value:
+        - relocaterequestqueueid: 3484179e-3542-4a24-b973-512e9ab23eaf
+          folderpath: '/ProjectA/Reports'
+          processingstatus:
+            - totalcount: 40
+              completedcount: 37
+              errorcount: 3
+              state: 
+                - completed: true
+                  pending: false
+                  inprogress: false
+                  resubmitted: false
+          deststoragename: 'storage 1'
+          submitteddate: 2022-11-25 13:45:27.629829+05:30
+          submittedby: admin (admin)          
+          criteria:
+            - type: 'all'
+        - relocaterequestqueueid: 5689320e-2390-2a12-b666-256e9ab45eaf
+          folderpath: '/ProjectBBBB/Injections'
+          processingstatus:
+            - totalcount: 153
+              completedcount: 105
+              errorcount: 0
+              state: 
+                - completed: false
+                  pending: false
+                  inprogress: true
+                  resubmitted: false
+          deststoragename: 'storage 33'
+          submitteddate: 2022-12-02 11:20:19.533234+05:30
+          submittedby: admin (admin)          
+          criteria:
+            - type: 'agebased'
+              duration: 2 
+              period: 'months'
+              basedon: 'version date'
+     lockrequestlistexample:
+       description: List of all lock requests currently submitted and queued for processing
+       value:
+        - lockscheduleid: 3484179e-3542-4a24-b973-512e9ab23eaf
+          folderpath: '/ProjectA/Reports'
+          processingstatus:
+            - totalcount: 40
+              completedcount: 37
+              errorcount: 3
+              state: 
+                - completed: true
+                  pending: false
+                  inprogress: false
+                  resubmitted: false
+          submitteddate: 2022-11-25 13:45:27.629829+05:30
+          submittedby: admin (admin)          
+          criteria:
+            - type: 'all'
+        - lockscheduleid: 5689320e-2390-2a12-b666-256e9ab45eaf
+          folderpath: '/ProjectBBBB/Injections'
+          processingstatus:
+            - totalcount: 153
+              completedcount: 105
+              errorcount: 0
+              state: 
+                - completed: false
+                  pending: false
+                  inprogress: true
+                  resubmitted: false
+          submitteddate: 2022-12-02 11:20:19.533234+05:30
+          submittedby: admin (admin)          
+          criteria:
+            - type: 'agebased'
+              duration: 2 
+              period: 'months'
+              basedon: 'version date'
+     esignaturereasonslistexample:
+       description: List of all esignature reasons currently configured in the system
+       value:
+        - id: 3484179e-3542-4a24-b973-512e9ab23eaf
+          reason: I am the author of this document
+          localizedReason: I am the author of this document
+        - id: 5689320e-2390-2a12-b666-256e9ab45eaf
+          reason: Document has been reviewed
+          localizedReason: Document has been reviewed
+        - id: 6936100e-8956-3a10-b672-512e9ab77eaf
+          reason: I am rejecting this document
+          localizedReason: I am rejecting this document
+security:
+  - bearerAuth: []

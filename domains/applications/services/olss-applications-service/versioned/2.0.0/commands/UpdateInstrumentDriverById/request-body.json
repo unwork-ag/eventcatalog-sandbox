@@ -1,0 +1,43 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "attributes": {
+      "nullable": true,
+      "description": "Additional properties added to the instrument driver.\nEvery property represents a key/value pair where key is a string and value is one of the following types:\n* String\n* Signed 32-bit integer\n* Signed 64-bit integer (long type)\n* Double-precision floating point number\n* Boolean\n* MixedDictionary\n",
+      "allOf": [
+        {
+          "description": "Additional properties. A collection of key/value pairs where key is always string and value can be any type.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "name": {
+      "type": "string",
+      "example": "GCMS001",
+      "nullable": true,
+      "maxLength": 255
+    },
+    "description": {
+      "type": "string",
+      "example": "GC/MS in lab123",
+      "nullable": true,
+      "maxLength": 512
+    },
+    "smallIcon": {
+      "type": "string",
+      "format": "binary",
+      "description": "Small icon encoded in Base64 string.",
+      "nullable": true
+    },
+    "largeIcon": {
+      "type": "string",
+      "format": "binary",
+      "description": "Large icon encoded in Base64 string.",
+      "nullable": true
+    }
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "name",
+    "parentId",
+    "createdDate",
+    "createdBy",
+    "uniqueKey"
+  ],
+  "properties": {
+    "uniqueKey": {
+      "type": "string",
+      "description": "Unique key that can be used to identify an instrument driver"
+    },
+    "applicationId": {
+      "type": "integer",
+      "format": "int32",
+      "nullable": true
+    },
+    "smallIcon": {
+      "type": "string",
+      "format": "binary",
+      "description": "Small icon encoded in Base64 string.",
+      "nullable": true
+    },
+    "largeIcon": {
+      "type": "string",
+      "format": "binary",
+      "description": "Large icon encoded in Base64 string.",
+      "nullable": true
+    },
+    "attributes": {
+      "description": "A collection of location specific properties.\nEvery property represents a key/value pair where key is a string and value is one of the following types:\n* String\n* Signed 32-bit integers\n* Signed 64-bit integers (long type)\n* Floating-point numbers with double precision\n* Boolean\n* MixedDictionary\n",
+      "type": "object",
+      "additionalProperties": {
+        "type": "object"
+      }
+    },
+    "id": {
+      "type": "integer",
+      "format": "int32"
+    },
+    "parentId": {
+      "type": "integer",
+      "format": "int32"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "createdDate": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "createdBy": {
+      "type": "string"
+    },
+    "modifiedDate": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "lastModifiedBy": {
+      "type": "string"
+    }
+  },
+  "isSchema": true
+}

@@ -1,0 +1,76 @@
+---
+id: UpdateLargeIconInInstrumentDriverOfApplication
+version: 1.0.0
+name: UpdateLargeIconInInstrumentDriverOfApplication
+summary: >-
+  [NOT IMPLEMENTED] Creates or updates the large icon for the specified
+  instrument driver.
+schemaPath: request-body.json
+badges:
+  - content: PUT
+    textColor: blue
+    backgroundColor: blue
+  - content: 'tag:Applications'
+    textColor: blue
+    backgroundColor: blue
+owners:
+  - fw
+sidebar:
+  badge: PUT
+---
+## Overview
+[NOT IMPLEMENTED] This method is used to create or update the large icon for the specified instrument driver.
+A calling user will need to have been granted Controller_Edit permission.
+
+##### Use Cases
+
+1. At upgrade, an improved icon is registered.
+
+
+
+
+
+## PUT `(/v1.0/applications/{appid}/drivers/{id}/largeicon)`
+
+### Parameters
+- **appid** (path) (required): It is either Application's id or unique key.
+- **id** (path) (required): Identifier of an object
+- **Accept-Language** (header): The locale for any localized string returned by the method.
+
+Supported locales are:
+* en-US
+* ja-JP
+* pt-BR
+* ru-RU
+* zh-Hans
+
+Default is the server locale.
+
+
+
+### Request Body
+<SchemaViewer file="request-body.json" maxHeight="500" id="request-body" />
+
+
+### Responses
+
+#### <span className="text-orange-500">400 Bad Request</span>
+<SchemaViewer file="response-400.json" maxHeight="500" id="response-400" />
+
+#### <span className="text-orange-500">401 Unauthorized</span>
+<SchemaViewer file="response-401.json" maxHeight="500" id="response-401" />
+
+#### <span className="text-orange-500">403 Forbidden</span>
+<SchemaViewer file="response-403.json" maxHeight="500" id="response-403" />
+
+#### <span className="text-orange-500">404 Not Found</span>
+<SchemaViewer file="response-404.json" maxHeight="500" id="response-404" />
+
+#### <span className="text-red-500">500 Internal Server Error</span>
+<SchemaViewer file="response-500.json" maxHeight="500" id="response-500" />
+
+
+
+## Architecture
+
+<NodeGraph />

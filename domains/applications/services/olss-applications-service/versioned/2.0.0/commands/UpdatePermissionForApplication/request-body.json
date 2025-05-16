@@ -1,0 +1,25 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "nullable": true,
+      "example": "name",
+      "maxLength": 255
+    },
+    "description": {
+      "type": "string",
+      "example": "description",
+      "nullable": true,
+      "maxLength": 512
+    },
+    "groupId": {
+      "type": "integer",
+      "format": "int32",
+      "nullable": true,
+      "minimum": 1,
+      "example": 1
+    }
+  }
+}

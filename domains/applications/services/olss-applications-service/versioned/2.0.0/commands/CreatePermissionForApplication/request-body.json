@@ -1,0 +1,57 @@
+{
+  "description": "Defines a prototype to create a new permission.\nA caller provides either a groupId to add permission to the existing group\nOR groupName and groupDescription to create\na new permission group and then add permission to it.\n",
+  "allOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "key",
+        "name",
+        "type"
+      ],
+      "properties": {
+        "key": {
+          "type": "string",
+          "description": "Identifier that is unique within an application. The uniqueKey is created by concatenating the application key and permission key."
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 512
+        },
+        "type": {
+          "type": "string",
+          "description": "List of possible permission types:\n* administrative\n* instrument\n* project\n",
+          "example": "administrative"
+        }
+      }
+    },
+    {
+      "type": "object"
+    }
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "groupId": {
+      "type": "integer",
+      "format": "int32",
+      "nullable": true,
+      "example": 101
+    },
+    "groupName": {
+      "type": "string",
+      "nullable": true,
+      "example": "Instrument management",
+      "maxLength": 50
+    },
+    "groupDescription": {
+      "type": "string",
+      "nullable": true,
+      "example": "Access to instrument management",
+      "maxLength": 100
+    }
+  }
+}

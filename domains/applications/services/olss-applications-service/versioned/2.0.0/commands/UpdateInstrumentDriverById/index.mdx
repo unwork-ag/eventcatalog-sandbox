@@ -1,0 +1,94 @@
+---
+id: UpdateInstrumentDriverById
+version: 1.0.0
+name: UpdateInstrumentDriverById
+summary: Update an instrument driver for the specified application.
+schemaPath: request-body.json
+badges:
+  - content: PATCH
+    textColor: blue
+    backgroundColor: blue
+  - content: 'tag:Applications'
+    textColor: blue
+    backgroundColor: blue
+owners:
+  - fw
+sidebar:
+  badge: PATCH
+---
+## Overview
+This method is used to update an instrument driver for the specified application.
+A calling user will need to have been granted Controller_Edit permission to update an instrument driver.
+
+The caller must to provide the ETag from one of the following calls:
+
+1. GET /applications
+2. GET /applications/`{id}`
+3. POST /applications
+4. PUT /applications/`{id}`
+5. POST /applications/`{id}`/permissions
+6. PUT /applications/`{id}`/permissions/`{uk}`
+7. POST /applications/`{id}`/drivers
+
+If the instrument driver has changed since the ETag was received, the caller will need to
+retrieve the application again with its current ETag before attempting to update the instrument driver.
+
+##### Use Cases
+
+1. The name of the instrument driver is updated for clarity.
+
+
+
+
+
+## PATCH `(/v1.0/applications/{appid}/drivers/{id})`
+
+### Parameters
+- **appid** (path) (required): It is either Application's id or unique key.
+- **id** (path) (required): Identifier of an object
+- **If-Match** (header) (required): If-Match request header should be specified with the etag of the entity. It is used to detect optimistic locking failures.
+- **Accept-Language** (header): The locale for any localized string returned by the method.
+
+Supported locales are:
+* en-US
+* ja-JP
+* pt-BR
+* ru-RU
+* zh-Hans
+
+Default is the server locale.
+
+
+
+### Request Body
+<SchemaViewer file="request-body.json" maxHeight="500" id="request-body" />
+
+
+### Responses
+
+#### <span className="text-green-500">200 OK</span>
+<SchemaViewer file="response-200.json" maxHeight="500" id="response-200" />
+
+#### <span className="text-orange-500">400 Bad Request</span>
+<SchemaViewer file="response-400.json" maxHeight="500" id="response-400" />
+
+#### <span className="text-orange-500">401 Unauthorized</span>
+<SchemaViewer file="response-401.json" maxHeight="500" id="response-401" />
+
+#### <span className="text-orange-500">403 Forbidden</span>
+<SchemaViewer file="response-403.json" maxHeight="500" id="response-403" />
+
+#### <span className="text-orange-500">404 Not Found</span>
+<SchemaViewer file="response-404.json" maxHeight="500" id="response-404" />
+
+#### <span className="text-orange-500">412</span>
+<SchemaViewer file="response-412.json" maxHeight="500" id="response-412" />
+
+#### <span className="text-red-500">500 Internal Server Error</span>
+<SchemaViewer file="response-500.json" maxHeight="500" id="response-500" />
+
+
+
+## Architecture
+
+<NodeGraph />

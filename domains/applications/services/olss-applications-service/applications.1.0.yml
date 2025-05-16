@@ -1,0 +1,984 @@
+openapi: 3.0.0
+info:
+  version: 1.0.0
+  title: OLSS Applications REST API
+  description: OLSS Applications REST API
+security:
+  - BearerAuth: []
+paths:
+  /v1.0/applications:
+    get:
+      tags:
+      - Applications
+      summary: Get all applications in the system
+      operationId: GetApplications
+      parameters:
+        - $ref: '#/components/parameters/Include'
+        - $ref: '../common.yml#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: List of applications
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationsResponse'
+        '400':
+          $ref: '../common.yml#/components/responses/BadRequest'
+        '401':
+          $ref: '../common.yml#/components/responses/Unauthenticated'
+        '500':
+          $ref: '../common.yml#/components/responses/InternalServerError'
+        '503':
+          $ref: '../common.yml#/components/responses/ServiceUnavailable'
+    post:
+      tags:
+      - Applications
+      summary: "Adds an application."
+      description: |
+        This method is used to add an application. A calling user will need to
+        have been granted the following permissions:
+        - A minimal required set is *Components_Manage* and *Controller_Edit* to be able to create an application itself and drivers.
+        - Optionally a caller needs *Security_Manage* permission in order to deploy permissions and permission groups if any.
+        - System Administrators are able to create all parts of an application.
+
+        The following will result in an error and a 409 status code:
+        1. An application with the specified unique key already exists
+        2. An application with the specified name already exists
+        3. A permission with a unique key that matches one of the specified permissions already exists
+        4. A driver with a unique key that matches one of the specified drivers already exists
+        If an error occurs because of a conflict with application unique key, the method returns a 409 status
+        code.
+
+        If an application is returned in the response, an ETag will be returned for the application.
+        ##### Use Cases
+
+        1. Create a new application, including the permission and driver objects associated with the application.
+      operationId: CreateApplication
+      parameters:
+        - $ref: '../common.yml#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicationPostPrototype'
+      responses:
+        '201':
+          description: The application was created.
+          content:
+            application/json:
+              schema:
+                $ref: '../common.yml#/components/schemas/ApplicationResponse'
+          headers:
+            ETag:
+              description: |-
+                Current ETag value for the application.
+              schema:
+                type: string
+        '400':
+          $ref: '../common.yml#/components/responses/BadRequest'
+        '401':
+          $ref: '../common.yml#/components/responses/Unauthenticated'
+        '403':
+          $ref: '../common.yml#/components/responses/Unauthorized'
+        '409':
+          $ref: '../common.yml#/components/responses/ApplicationConflictResponse'
+        '500':
+          $ref: '../common.yml#/components/responses/InternalServerError'
+  /v1.0/applications/{appid}:
+    get:
+      tags:
+      - Applications
+      summary: "Get the specified application."
+      description: |
+        Get all or some parts of the specified application.
+
+        ##### Use Cases
+
+        1. Retrieve the permissions and permissionGroups for an application to see if new permissions need to be registered.
+        2. Retrieve the drivers for an application to see if a new driver needs to be registered.
+        3. Retrieve the properties for an application to determine when it was last updated.
+      operationId: GetApplicationById
+      parameters:
+        - $ref: '../common.yml#/components/parameters/ApplicationId'
+        - $ref: '#/components/parameters/Include'
+        - $ref: '../common.yml#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: The specified application.
+          content:
+            application/json:
+              schema:
+                $ref: '../common.yml#/components/schemas/ApplicationResponse'
+          headers:
+            ETag:
+              description: Current ETag value for the application.
+              schema:
+                type: string
+        '400':
+          $ref: '../common.yml#/components/responses/BadRequest'
+        '401':
+          $ref: '../common.yml#/components/responses/Unauthenticated'
+        '404':
+          $ref: '../common.yml#/components/responses/NotFound'
+        '500':
+          $ref: '../common.yml#/components/responses/InternalServerError'
+    put:
+      tags:
+      - Applications
+      summary: "Updates the properties of an application."
+      description: |
+        This method is used to update the properties of an application. A calling user will need to
+        have been granted Security_Manage or Components_Manage permissions.
+
+        The caller must provide the last ETag it received for the application in
+        an IfMatch request header. The Etag returned from any of these methods may
+        be used.
+        1. GET /applications
+        2. GET /applications/`{id}`
+        3. POST /applications
+        4. PUT /applications/`{id}`
+        5. POST /applications/`{id}`/permissions
+        6. PATCH /applications/`{id}`/permissions/`{key}`
+        7. POST /applications/`{id}`/drivers
+
+        If the application has changed since the ETag was retrieved, a 412 status code will be returned.
+        The caller will need to retrieve the application again, update one or more properties,
+        and reattempt the call with the new prototype and ETag.
+
+        ##### Use Cases
+
+        1. Update the properties of an application.
+      operationId: UpdateApplication
+      parameters:
+        - $ref: '../common.yml#/components/parameters/ApplicationId'
+        - $ref: '../common.yml#/components/parameters/AcceptLanguage'
+        - $ref: '../common.yml#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../common.yml#/components/schemas/ApplicationPutPrototype'
+      responses:
+        '200':
+          description: The application was updated.
+          content:
+            application/json:
+              schema:
+                $ref: '../common.yml#/components/schemas/ApplicationResponse'
+          headers:
+            ETag:
+              description: |-
+                Current ETag value for the application.
+              schema:
+                type: string
+        '400':
+          $ref: '../common.yml#/components/responses/BadRequest'
+        '401':
+          $ref: '../common.yml#/components/responses/Unauthenticated'
+        '403':
+          $ref: '../common.yml#/components/responses/Unauthorized'
+        '404':
+          $ref: '../common.yml#/components/responses/NotFound'
+        '409':
+          $ref: '../common.yml#/components/responses/ApplicationConflictResponse'
+        '412':
+          $ref: '../common.yml#/components/responses/PreconditionFailed'
+        '500':
+          $ref: '../common.yml#/components/responses/InternalServerError'
+    delete:
+      tags:
+        - Applications
+      summary: Delete an existing application
+      description: |
+        This method is used to delete the application specified by the **appid** parameter. Either
+        the **id** or **uniqueKey** properties may be used for this parameter.
+
+        Drivers and permissions will be removed with their associated application.
+
+        It is an error to try and delete an Application currently associated with an Instrument or
+        InstrumentController. The Instrument or InstrumentController must first be deleted before
+        deleting the Application.
+
+        The caller must have been granted Security_Manage permission in order to delete an application.
+
+        A call made with a non-user token will return status code 403.
+      operationId: DeleteApplication
+      parameters:
+        - $ref: '../common.yml#/components/parameters/ApplicationId'
+        - $ref: '../common.yml#/components/parameters/AcceptLanguage'
+      responses:
+        '204':
+          description: Application was deleted successfully
+        '400':
+          $ref: '../common.yml#/components/responses/BadRequest'
+        '401':
+          $ref: '../common.yml#/components/responses/Unauthenticated'
+        '403':
+          $ref: '../common.yml#/components/responses/Unauthorized'
+        '404':
+          $ref: '../common.yml#/components/responses/NotFound'
+        '409':
+          $ref: '../common.yml#/components/responses/Conflict'
+        '500':
+          $ref: '../common.yml#/components/responses/InternalServerError'
+  /v1.0/applications/{appid}/permissions:
+    post:
+      tags:
+      - Applications
+      summary: "Create a permission for the specified application."
+      description: |
+        This method is used to create a permission for the specified application.
+        A calling user will need to have been granted Security_Manage permission.
+
+        Each permission has a unique key. This method determines whether a permission
+        already exists with the key specified in the prototype. If so, the method returns a 409 status
+        code.
+
+        ##### Use Cases
+
+        1. Add a new permission to an application during an upgrade.
+      operationId: CreatePermissionForApplication
+      parameters:
+        - $ref: '../common.yml#/components/parameters/ApplicationId'
+        - $ref: '../common.yml#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PermissionPostPrototype'
+      responses:
+        '201':
+          description: The permission was created.
+          content:
+            application/json:
+              schema:
+                $ref: '../common.yml#/components/schemas/ApplicationPermission'
+          headers:
+            ETag:
+              description: |-
+                The ETag HTTP response header identifies a specific version of an application.
+              schema:
+                type: string
+        '400':
+          $ref: '../common.yml#/components/responses/BadRequest'
+        '401':
+          $ref: '../common.yml#/components/responses/Unauthenticated'
+        '403':
+          $ref: '../common.yml#/components/responses/Unauthorized'
+        '404':
+          $ref: '../common.yml#/components/responses/NotFound'
+        '409':
+          $ref: '../common.yml#/components/responses/ApplicationConflictResponse'
+        '500':
+          $ref: '../common.yml#/components/responses/InternalServerError'
+  /v1.0/applications/{appid}/permissions/{key}:
+    patch:
+      tags:
+      - Applications
+      summary: "Update the editable properties of the permission for the specified application."
+      description: |
+        This method is used to update the properties of a permission for the specified application.
+        A calling user will need to have been granted Security_Manage permission.
+
+        A calling user has to provide all the fields that are necessary to update. Unfilled fields won't be updated.
+
+        The caller must to provide the etag from one of the following calls
+        1. GET /applications
+        2. GET /applications/`{id}`
+        3. POST /applications
+        4. PUT /applications/`{id}`
+        5. POST /applications/`{id}`/permissions
+        6. PATCH /applications/`{id}`/permissions/`{key}`
+        7. POST /applications/`{id}`/drivers
+        If the permission has changed since the etag was retrieved, the caller will need to retrieve its application again before attempting to update the permission.
+
+        ##### Use Cases
+
+        1. On upgrade, a permission is moved to a different permission group.
+        2. On upgrade, a permission is renamed.
+      operationId: UpdatePermissionForApplication
+      parameters:
+        - $ref: '../common.yml#/components/parameters/ApplicationId'
+        - $ref: '#/components/parameters/PermissionUniqueKey'
+        - $ref: '../common.yml#/components/parameters/AcceptLanguage'
+        - $ref: '../common.yml#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PermissionPatchPrototype'
+      responses:
+        '200':
+          description: The permission was updated.
+          content:
+            application/json:
+              schema:
+                $ref: '../common.yml#/components/schemas/ApplicationPermission'
+          headers:
+            ETag:
+              description: |-
+                The ETag HTTP response header identifies a specific version of an application.
+              schema:
+                type: string
+        '400':
+          $ref: '../common.yml#/components/responses/BadRequest'
+        '401':
+          $ref: '../common.yml#/components/responses/Unauthenticated'
+        '403':
+          $ref: '../common.yml#/components/responses/Unauthorized'
+        '404':
+          $ref: '../common.yml#/components/responses/NotFound'
+        '409':
+          $ref: '../common.yml#/components/responses/ApplicationConflictResponse'
+        '412':
+          $ref: '../common.yml#/components/responses/PreconditionFailed'
+        '500':
+          $ref: '../common.yml#/components/responses/InternalServerError'
+  /v1.0/applications/{appid}/drivers:
+    post:
+      tags:
+      - Applications
+      summary: Create an instrument driver for the specified application.
+      description: |
+        This method is used to create an instrument driver for the specified application.
+        A calling user will need to have been granted Components_Manage permission to create
+        an instrument driver and also Controller_Edit permission in case of icons were provided.
+
+        Each instrument driver has a unique key. This method determines whether an instrument driver
+        already exists with the key specified in the prototype. If so, the method returns a 409 status
+        code.
+
+        ##### Use Cases
+
+        1. During upgrade, an application creates a newly supported instrument driver.
+      operationId: CreateInstrumentDriver
+      parameters:
+        - $ref: '../common.yml#/components/parameters/ApplicationId'
+        - $ref: '../common.yml#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstrumentDriverPostPrototype'
+      responses:
+        '201':
+          description: An instrument driver was created.
+          content:
+            application/json:
+              schema:
+                $ref: '../common.yml#/components/schemas/InstrumentDriver'
+          headers:
+            ETag:
+              description: |-
+                Current ETag value for the application.
+              schema:
+                type: string
+        '400':
+          $ref: '../common.yml#/components/responses/BadRequest'
+        '401':
+          $ref: '../common.yml#/components/responses/Unauthenticated'
+        '403':
+          $ref: '../common.yml#/components/responses/Unauthorized'
+        '404':
+          $ref: '../common.yml#/components/responses/NotFound'
+        '409':
+          $ref: '../common.yml#/components/responses/ApplicationConflictResponse'
+        '500':
+          $ref: '../common.yml#/components/responses/InternalServerError'
+  /v1.0/applications/{appid}/drivers/{id}:
+    patch:
+      tags:
+      - Applications
+      summary: Update an instrument driver for the specified application.
+      description: |
+        This method is used to update an instrument driver for the specified application.
+        A calling user will need to have been granted Controller_Edit permission to update an instrument driver.
+
+        The caller must to provide the ETag from one of the following calls:
+
+        1. GET /applications
+        2. GET /applications/`{id}`
+        3. POST /applications
+        4. PUT /applications/`{id}`
+        5. POST /applications/`{id}`/permissions
+        6. PUT /applications/`{id}`/permissions/`{uk}`
+        7. POST /applications/`{id}`/drivers
+
+        If the instrument driver has changed since the ETag was received, the caller will need to
+        retrieve the application again with its current ETag before attempting to update the instrument driver.
+
+        ##### Use Cases
+
+        1. The name of the instrument driver is updated for clarity.
+      operationId: UpdateInstrumentDriverById
+      parameters:
+        - $ref: '../common.yml#/components/parameters/ApplicationId'
+        - $ref: '../common.yml#/components/parameters/DataObjectId'
+        - $ref: '../common.yml#/components/parameters/IfMatch'
+        - $ref: '../common.yml#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstrumentDriverPatchPrototype'
+      responses:
+        '200':
+          description: The instrument driver was updated.
+          content:
+            application/json:
+              schema:
+                $ref: '../common.yml#/components/schemas/InstrumentDriver'
+          headers:
+            ETag:
+              description: |-
+                Current ETag value for the application.
+              schema:
+                type: string
+        '400':
+          $ref: '../common.yml#/components/responses/BadRequest'
+        '401':
+          $ref: '../common.yml#/components/responses/Unauthenticated'
+        '403':
+          $ref: '../common.yml#/components/responses/Unauthorized'
+        '404':
+          $ref: '../common.yml#/components/responses/NotFound'
+        '412':
+          $ref: '../common.yml#/components/responses/PreconditionFailed'
+        '500':
+          $ref: '../common.yml#/components/responses/InternalServerError'
+  /v1.0/applications/{appid}/drivers/{id}/smallicon:
+    put:
+      tags:
+      - Applications
+      summary: "[NOT IMPLEMENTED] Creates or updates the small icon for the specified instrument driver."
+      description: |
+        [NOT IMPLEMENTED] This method is used to create or update the small icon for the specified instrument driver.
+        A calling user will need to have been granted Controller_Edit permission.
+
+        ##### Use Cases
+
+        1. At upgrade, an improved icon is registered.
+      operationId: UpdateSmallIconInInstrumentDriverOfApplication
+      parameters:
+        - $ref: '../common.yml#/components/parameters/ApplicationId'
+        - $ref: '../common.yml#/components/parameters/DataObjectId'
+        - $ref: '../common.yml#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstrumentDriverIcon'
+      responses:
+        '201':
+          description: The instrument driver's small icon was created.
+        '204':
+          description: The instrument driver's small icon was updated.
+        '400':
+          $ref: '../common.yml#/components/responses/BadRequest'
+        '401':
+          $ref: '../common.yml#/components/responses/Unauthenticated'
+        '403':
+          $ref: '../common.yml#/components/responses/Unauthorized'
+        '404':
+          $ref: '../common.yml#/components/responses/NotFound'
+        '500':
+          $ref: '../common.yml#/components/responses/InternalServerError'
+  /v1.0/applications/{appid}/drivers/{id}/largeicon:
+    put:
+      tags:
+      - Applications
+      summary: "[NOT IMPLEMENTED] Creates or updates the large icon for the specified instrument driver."
+      description: |
+        [NOT IMPLEMENTED] This method is used to create or update the large icon for the specified instrument driver.
+        A calling user will need to have been granted Controller_Edit permission.
+
+        ##### Use Cases
+
+        1. At upgrade, an improved icon is registered.
+      operationId: UpdateLargeIconInInstrumentDriverOfApplication
+      parameters:
+        - $ref: '../common.yml#/components/parameters/ApplicationId'
+        - $ref: '../common.yml#/components/parameters/DataObjectId'
+        - $ref: '../common.yml#/components/parameters/AcceptLanguage'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InstrumentDriverIcon'
+      responses:
+        '201':
+          description: The instrument driver's large icon was created.
+        '204':
+          description: The instrument driver's large icon was updated.
+        '400':
+          $ref: '../common.yml#/components/responses/BadRequest'
+        '401':
+          $ref: '../common.yml#/components/responses/Unauthenticated'
+        '403':
+          $ref: '../common.yml#/components/responses/Unauthorized'
+        '404':
+          $ref: '../common.yml#/components/responses/NotFound'
+        '500':
+          $ref: '../common.yml#/components/responses/InternalServerError'
+  /v1.0/applications/{appid}/usersettingnames:
+    get:
+      tags:
+      - Applications
+      summary: Retrieves user setting names for the application.
+      description: |
+        This method is used to retrieve a list of user setting names for the current user on a specified application.
+        User settings are always associated with a particular user account.
+
+        A user (including an administrator) is allowed to access only those user settings
+        that he/she owns.
+
+        ##### Use Cases
+
+        1. Get user-specific layout information for application UI
+        2. Get last UI selections for users
+        3. Get last printer selections for users
+      operationId: GetApplicationUserSettingsNames
+      parameters:
+        - $ref: '../common.yml#/components/parameters/ApplicationId'
+        - $ref: '../common.yml#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Names of user settings associated with the application.
+          content:
+            application/json:
+              schema:
+                type: array
+                example: [ "first user setting", "second user setting" ]
+                items:
+                  type: string
+        '400':
+          $ref: '../common.yml#/components/responses/BadRequest'
+        '401':
+          $ref: '../common.yml#/components/responses/Unauthenticated'
+        '404':
+          $ref: '../common.yml#/components/responses/NotFound'
+        '500':
+          $ref: '../common.yml#/components/responses/InternalServerError'
+  /v1.0/applications/{appid}/usersettings:
+    get:
+      tags:
+      - Applications
+      summary: "Retrieves a user setting related to the specified application."
+      description: |
+        This method is used to retrieve a user setting by name for the current user on a specified application.
+        User settings are always associated with a particular user account.
+
+        A user (including an administrator) is allowed to access only those user settings
+        that he/she owns.
+
+        ##### Use Cases
+
+        1. Get user-specific layout information for application UI
+        2. Get last UI selections for users
+        3. Get last printer selections for users
+      operationId: GetApplicationUserSettingByName
+      parameters:
+        - $ref: '../common.yml#/components/parameters/ApplicationId'
+        - $ref: '../common.yml#/components/parameters/UserSettingName'
+        - $ref: '../common.yml#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: The user setting associated with an application.
+          $ref: '../common.yml#/components/responses/Attachment'
+        '400':
+          $ref: '../common.yml#/components/responses/BadRequest'
+        '401':
+          $ref: '../common.yml#/components/responses/Unauthenticated'
+        '404':
+          $ref: '../common.yml#/components/responses/NotFound'
+        '500':
+          $ref: '../common.yml#/components/responses/InternalServerError'
+    put:
+      tags:
+      - Applications
+      summary: Adds or updates an application user setting.
+      description: |
+        This method is used to add or update a user setting for the current user on a specified application.
+        User settings are always associated with a particular user account.
+
+        A user (including an administrator) is allowed to update
+        only those user settings that he/she owns.
+
+        ##### Use Cases
+
+        1. Save user-specific layout information for application UI
+        2. Save last UI selections for users
+        3. Save last printer selections for users
+      operationId: SetApplicationUserSettingByName
+      parameters:
+        - $ref: '../common.yml#/components/parameters/ApplicationId'
+        - $ref: '../common.yml#/components/parameters/UserSettingName'
+        - $ref: '../common.yml#/components/parameters/AcceptLanguage'
+      requestBody:
+        description: A user setting
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../common.yml#/components/schemas/Attachment'
+            examples:
+              textExample:
+                $ref: '../common.yml#/components/examples/TextAttachmentRequest'
+              int32Example:
+                $ref: '../common.yml#/components/examples/Int32AttachmentRequest'
+              doubleExample:
+                $ref: '../common.yml#/components/examples/DoubleAttachmentRequest'
+              dateTimeExample:
+                $ref: '../common.yml#/components/examples/DateTimeAttachmentRequest'
+              binaryExample:
+                $ref: '../common.yml#/components/examples/BinaryAttachmentRequest'
+              customTypeExample:
+                $ref: '../common.yml#/components/examples/CustomTypeAttachmentRequest'
+      responses:
+        '201':
+          description: The user setting was created
+          headers:
+            Location:
+              schema:
+                type: string
+              description: URI for new resource
+        '204':
+          description: A user setting was updated
+        '400':
+          $ref: '../common.yml#/components/responses/BadRequest'
+        '401':
+          $ref: '../common.yml#/components/responses/Unauthenticated'
+        '404':
+          $ref: '../common.yml#/components/responses/NotFound'
+        '500':
+          $ref: '../common.yml#/components/responses/InternalServerError'
+    delete:
+      tags:
+        - Applications
+      summary: "Delete a user setting for an application."
+      description: |
+        This method is used to delete a user setting for the current user on the specified application.
+
+        A user (including an administrator) is allowed to delete only those user settings that he/she owns.
+
+      operationId: DeleteApplicationUserSettingByName
+      parameters:
+        - $ref: '../common.yml#/components/parameters/ApplicationId'
+        - $ref: '../common.yml#/components/parameters/UserSettingName'
+      responses:
+        '204':
+          description: A user setting was deleted.
+        '400':
+          $ref: '../common.yml#/components/responses/BadRequest'
+        '401':
+          $ref: '../common.yml#/components/responses/Unauthenticated'
+        '404':
+          $ref: '../common.yml#/components/responses/NotFound'
+        '500':
+          $ref: '../common.yml#/components/responses/InternalServerError'
+  /v1.0/applications/{appid}/usersettings/all:
+    delete:
+      tags:
+        - Applications
+      summary: "Deletes user settings for an application."
+      description: |
+        This method is used to delete all user settings for the current user on the specified application.
+
+        A user (including an administrator) is allowed to delete only those user settings that he/she owns.
+        If a call was made with a non-user ticket a method will return response 400 status code.
+
+      operationId: DeleteAllApplicationUserSettings
+      parameters:
+        - $ref: '../common.yml#/components/parameters/ApplicationId'
+        - $ref: '../common.yml#/components/parameters/AcceptLanguage'
+      responses:
+        '204':
+          description: All user settings were deleted.
+        '400':
+          $ref: '../common.yml#/components/responses/BadRequest'
+        '401':
+          $ref: '../common.yml#/components/responses/Unauthenticated'
+        '404':
+          $ref: '../common.yml#/components/responses/NotFound'
+        '500':
+          $ref: '../common.yml#/components/responses/InternalServerError'
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: '../common.yml#/components/securitySchemes/BearerAuth'
+  schemas:
+    ApplicationsResponse:
+      type: object
+      description: Applications
+      additionalProperties: false
+      properties:
+        applications:
+          type: array
+          description: List of Applications
+          items:
+            $ref: '../common.yml#/components/schemas/Application'
+        instrumentControllers:
+          type: array
+          description: List of Instrument Controllers
+          nullable: true
+          items:
+            $ref: '../common.yml#/components/schemas/InstrumentController'
+        instrumentDrivers:
+          type: array
+          description: List of Instrument Drivers
+          nullable: true
+          items:
+            $ref: '../common.yml#/components/schemas/InstrumentDriver'
+    ApplicationPostPrototype:
+      type: object
+      description: Defines a prototype to create an application.
+      additionalProperties: false
+      required:
+        - uniqueKey
+        - name
+      properties:
+        uniqueKey:
+          type: string
+          description: Unique string for the application
+        areProjectsSupported:
+          type: boolean
+          description: Whether the application uses projects
+        areInstrumentsControlled:
+          type: boolean
+          description: Whether the application has instruments
+        attributes:
+          $ref: '#/components/schemas/MixedDictionary'
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+          maxLength: 512
+        permissionGroups:
+          type: array
+          description: List of permission groups containing the permissions added by this application
+          nullable: true
+          items:
+            $ref: '#/components/schemas/ApplicationPermissionGroupPostPrototype'
+        instrumentDrivers:
+          type: array
+          description: List of Instrument Drivers
+          nullable: true
+          items:
+            $ref: '#/components/schemas/InstrumentDriverPostPrototype'
+    ApplicationPermissionGroupPostPrototype:
+      type: object
+      additionalProperties: false
+      required:
+      - name
+      properties:
+        name:
+          type: string
+          maxLength: 50
+        description:
+          type: string
+          maxLength: 100
+        permissions:
+          type: array
+          description: List of post permission models
+          nullable: true
+          items:
+            $ref: '#/components/schemas/ApplicationPermissionPostPrototype'
+    PermissionPostPrototype:
+      description: |
+        Defines a prototype to create a new permission.
+        A caller provides either a groupId to add permission to the existing group
+        OR groupName and groupDescription to create
+        a new permission group and then add permission to it.
+      allOf:
+      - $ref: '#/components/schemas/ApplicationPermissionPostPrototype'
+      - type: object
+      additionalProperties: false
+      properties:
+        groupId:
+          type: integer
+          format: int32
+          nullable: true
+          example: 101
+        groupName:
+          type: string
+          nullable: true
+          example: "Instrument management"
+          maxLength: 50
+        groupDescription:
+          type: string
+          nullable: true
+          example: "Access to instrument management"
+          maxLength: 100
+    ApplicationPermissionPostPrototype:
+      type: object
+      additionalProperties: false
+      required:
+      - key
+      - name
+      - type
+      properties:
+        key:
+          type: string
+          description: "Identifier that is unique within an application. The uniqueKey is created by concatenating the application key and permission key."
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          maxLength: 512
+        type:
+          $ref: '../common.yml#/components/schemas/PermissionType'
+    PermissionPatchPrototype:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          nullable: true
+          example: name
+          maxLength: 255
+        description:
+          type: string
+          example: description
+          nullable: true
+          maxLength: 512
+        groupId:
+          type: integer
+          format: int32
+          nullable: true
+          minimum: 1
+          example: 1
+    InstrumentDriverPostPrototype:
+      type: object
+      additionalProperties: false
+      required:
+      - name
+      - uniqueKey
+      properties:
+        uniqueKey:
+          type: string
+          description: Unique key that can be used to identify an instrument driver.
+        attributes:
+          $ref: '#/components/schemas/MixedDictionary'
+        name:
+          type: string
+          example: GCMS001
+          maxLength: 255
+        description:
+          type: string
+          example: GC/MS in lab123
+          nullable: true
+          maxLength: 512
+        smallIcon:
+          type: string
+          format: binary
+          description: Small icon encoded in Base64 string.
+          nullable: true
+        largeIcon:
+          type: string
+          format: binary
+          description: Large icon encoded in Base64 string.
+          nullable: true
+    InstrumentDriverPatchPrototype:
+      type: object
+      additionalProperties: false
+      properties:
+        attributes:
+          nullable: true
+          description: |
+            Additional properties added to the instrument driver.
+            Every property represents a key/value pair where key is a string and value is one of the following types:
+            * String
+            * Signed 32-bit integer
+            * Signed 64-bit integer (long type)
+            * Double-precision floating point number
+            * Boolean
+            * MixedDictionary
+          allOf:
+          - $ref: '#/components/schemas/MixedDictionary'
+        name:
+          type: string
+          example: GCMS001
+          nullable: true
+          maxLength: 255
+        description:
+          type: string
+          example: GC/MS in lab123
+          nullable: true
+          maxLength: 512
+        smallIcon:
+          type: string
+          format: binary
+          description: Small icon encoded in Base64 string.
+          nullable: true
+        largeIcon:
+          type: string
+          format: binary
+          description: Large icon encoded in Base64 string.
+          nullable: true
+    InstrumentDriverIcon:
+      type: object
+      additionalProperties: false
+      properties:
+        icon:
+          type: string
+          format: binary
+          description: Icon binary data.
+          nullable: true
+    MixedDictionary:
+      description: Additional properties. A collection of key/value pairs where key is always string and value can be any type.
+      type: object
+      additionalProperties:
+        type: object
+  parameters:
+    PermissionUniqueKey:
+      name: key
+      in: path
+      description: Unique key of application's permission.
+      required: true
+      schema:
+        type: string
+      example: "Security_Manage"
+    Include:
+      name: include
+      in: query
+      description:
+        Specifies which information should be included in the response.
+
+        Supported values (case-sensitive, comma-separated)
+        prop - the properties for the Application
+        perm -  the permissions defined for the Application, grouped by PermissionGroup
+        id - the instrument drivers defined for the Application
+        ic - the instrument controllers configured for the Application
+        *No extra spaces may be included in the comma-delimited string.*
+
+        All properties and related objects for each application are returned in the following cases
+        - Include parameter is empty;
+        - Include parameter is omitted;
+        - Include parameter is * character.
+      required: false
+      schema:
+        type: string
+      examples:
+        includeAll:
+          value: prop,perm,id,ic
+          summary: Include all properties and related objects for each application
+        includeAllUsingAsterisk:
+          value: "*"
+          summary: Include all properties and related objects for each application
+        includeOnlyPermissions:
+          value: perm
+          summary: Include only permissions configured for each application
+        includeInstrumentDriversAndControllers:
+          value: id,ic
+          summary: Include instrument drivers and instrument controllers configured for each application

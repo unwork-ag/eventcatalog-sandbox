@@ -1,0 +1,55 @@
+{
+  "title": "ApiError",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "errorCode": {
+      "description": "An enum of Shared Services-specific errors.",
+      "type": "string",
+      "enum": [
+        "Undefined",
+        "NotFound",
+        "Unauthorized",
+        "NotImplemented",
+        "Forbidden",
+        "InternalServerError",
+        "ObjectNotFound",
+        "InvalidParameter",
+        "StorageUnavailable",
+        "ExternalStorageError",
+        "ThirdPartySystemError",
+        "AuthenticationFailed",
+        "InvalidToken",
+        "IncorrectLoginOrPassword",
+        "UserIsDisabled",
+        "TemporarilyBlocked",
+        "MustChangePassword",
+        "AccountIsExpired",
+        "PasswordIsEmpty",
+        "BearerTokenNotProvided",
+        "InvalidTokenSignature",
+        "TokenExpired",
+        "AuthenticationProviderNotAuthenticated",
+        "AuthenticationProviderNotAvailable",
+        "UserNotMapped",
+        "EmptyUserApplication",
+        "ActivityLogNotEnabled",
+        "PasswordIsTooShort",
+        "PasswordMustBeNew",
+        "UserCannotChangePassword",
+        "InvalidOperation",
+        "IndexCorrupted",
+        "IndexNotReady"
+      ]
+    },
+    "error": {
+      "description": "Simple error message, not localized.",
+      "type": "string"
+    },
+    "localizedError": {
+      "description": "Localized error message, potentially more detailed, generally only provided for errors relevant to an end user.",
+      "type": "string"
+    }
+  },
+  "isSchema": true
+}

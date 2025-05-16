@@ -1,0 +1,85 @@
+{
+  "allOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "userApplication"
+      ],
+      "properties": {
+        "userApplication": {
+          "type": "string",
+          "minLength": 1,
+          "maximum": 50,
+          "description": "The user-friendly name of the application."
+        },
+        "clientDevice": {
+          "type": "string",
+          "maximum": 50,
+          "description": "The name of the device the application (or browser) is running on (whether computer or mobile device)."
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "description",
+        "eventLevel",
+        "eventType"
+      ],
+      "properties": {
+        "applicationDataReference": {
+          "type": "string",
+          "nullable": true,
+          "description": "An optional JSON-formatted set of reference information that can be used to scope the activity log entry to specific objects/actions/files."
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maximum": 450
+        },
+        "details": {
+          "type": "string",
+          "nullable": true,
+          "maximum": 2000,
+          "description": "The full details of the activity log entry."
+        },
+        "eventLevel": {
+          "type": "string",
+          "description": "The event level for the activity log entry. This can be Info, Warning or Error and is case sensitive.",
+          "example": "Error"
+        },
+        "eventType": {
+          "type": "string",
+          "description": "The category or type to which the event relates. This can be Access, Configuration, General, Instrument and Security. This value is case sensitive.",
+          "example": "Instrument"
+        },
+        "objectId": {
+          "type": "integer",
+          "format": "int32",
+          "nullable": true,
+          "description": "Only applicable to actions made against Shared Services objects. This should be the Id of the Shared Services object that was interacted with."
+        },
+        "sampleId": {
+          "type": "string",
+          "nullable": true,
+          "maximum": 255,
+          "description": "The ID for the sample. This field is also the appropriate place to provide the LIMS ID value (if applicable)."
+        },
+        "bufferingDelay": {
+          "type": "string",
+          "nullable": true,
+          "description": "Time difference between ActivityLog creation and sending it to server. (ISO 8601)",
+          "example": "PT3H30M5S"
+        },
+        "reason": {
+          "type": "string",
+          "nullable": true,
+          "maximum": 1024,
+          "description": "The reason for the activity log entry."
+        }
+      }
+    }
+  ]
+}

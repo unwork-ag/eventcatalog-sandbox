@@ -11,7 +11,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "@eventcatalog/core": "2.28.3",
-    "@eventcatalog/generator-openapi": "4.0.6"
+    "@eventcatalog/core": "^2.39.2",
+    "@eventcatalog/generator-openapi": "^6.0.1"
   }
 }

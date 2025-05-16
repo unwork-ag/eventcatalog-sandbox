@@ -1,0 +1,75 @@
+---
+id: GetApplicationUserSettingsNames
+version: 1.0.0
+name: GetApplicationUserSettingsNames
+summary: Retrieves user setting names for the application.
+schemaPath: ''
+badges:
+  - content: GET
+    textColor: blue
+    backgroundColor: blue
+  - content: 'tag:Applications'
+    textColor: blue
+    backgroundColor: blue
+owners:
+  - fw
+sidebar:
+  badge: GET
+---
+## Overview
+This method is used to retrieve a list of user setting names for the current user on a specified application.
+User settings are always associated with a particular user account.
+
+A user (including an administrator) is allowed to access only those user settings
+that he/she owns.
+
+##### Use Cases
+
+1. Get user-specific layout information for application UI
+2. Get last UI selections for users
+3. Get last printer selections for users
+
+
+
+
+
+## GET `(/v1.0/applications/{appid}/usersettingnames)`
+
+### Parameters
+- **appid** (path) (required): It is either Application's id or unique key.
+- **Accept-Language** (header): The locale for any localized string returned by the method.
+
+Supported locales are:
+* en-US
+* ja-JP
+* pt-BR
+* ru-RU
+* zh-Hans
+
+Default is the server locale.
+
+
+
+
+### Responses
+
+#### <span className="text-green-500">200 OK</span>
+<SchemaViewer file="response-200.json" maxHeight="500" id="response-200" />
+
+#### <span className="text-orange-500">400 Bad Request</span>
+<SchemaViewer file="response-400.json" maxHeight="500" id="response-400" />
+
+#### <span className="text-orange-500">401 Unauthorized</span>
+<SchemaViewer file="response-401.json" maxHeight="500" id="response-401" />
+
+#### <span className="text-orange-500">404 Not Found</span>
+<SchemaViewer file="response-404.json" maxHeight="500" id="response-404" />
+
+#### <span className="text-red-500">500 Internal Server Error</span>
+<SchemaViewer file="response-500.json" maxHeight="500" id="response-500" />
+
+
+
+## Architecture
+
+<NodeGraph />

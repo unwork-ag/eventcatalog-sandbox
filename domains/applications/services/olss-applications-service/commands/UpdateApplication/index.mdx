@@ -1,0 +1,98 @@
+---
+id: UpdateApplication
+version: 2.0.0
+name: UpdateApplication
+summary: Updates the properties of an application.
+schemaPath: request-body.json
+badges:
+  - content: PUT
+    textColor: blue
+    backgroundColor: blue
+  - content: 'tag:Applications'
+    textColor: blue
+    backgroundColor: blue
+owners:
+  - fw
+sidebar:
+  badge: PUT
+---
+## Overview
+This method is used to update the properties of an application. A calling user will need to
+have been granted Security_Manage or Components_Manage permissions.
+
+The caller must provide the last ETag it received for the application in
+an IfMatch request header. The Etag returned from any of these methods may
+be used.
+1. GET /applications
+2. GET /applications/`{id}`
+3. POST /applications
+4. PUT /applications/`{id}`
+5. POST /applications/`{id}`/permissions
+6. PATCH /applications/`{id}`/permissions/`{key}`
+7. POST /applications/`{id}`/drivers
+
+If the application has changed since the ETag was retrieved, a 412 status code will be returned.
+The caller will need to retrieve the application again, update one or more properties,
+and reattempt the call with the new prototype and ETag.
+
+##### Use Cases
+
+1. Update the properties of an application.
+
+
+
+
+
+## PUT `(/v2.0/applications/{appid})`
+
+### Parameters
+- **appid** (path) (required): It is either Application's id or unique key.
+- **Accept-Language** (header): The locale for any localized string returned by the method.
+
+Supported locales are:
+* en-US
+* ja-JP
+* pt-BR
+* ru-RU
+* zh-Hans
+
+Default is the server locale.
+- **If-Match** (header) (required): If-Match request header should be specified with the etag of the entity. It is used to detect optimistic locking failures.
+
+
+
+### Request Body
+<SchemaViewer file="request-body.json" maxHeight="500" id="request-body" />
+
+
+### Responses
+
+#### <span className="text-green-500">200 OK</span>
+<SchemaViewer file="response-200.json" maxHeight="500" id="response-200" />
+
+#### <span className="text-orange-500">400 Bad Request</span>
+<SchemaViewer file="response-400.json" maxHeight="500" id="response-400" />
+
+#### <span className="text-orange-500">401 Unauthorized</span>
+<SchemaViewer file="response-401.json" maxHeight="500" id="response-401" />
+
+#### <span className="text-orange-500">403 Forbidden</span>
+<SchemaViewer file="response-403.json" maxHeight="500" id="response-403" />
+
+#### <span className="text-orange-500">404 Not Found</span>
+<SchemaViewer file="response-404.json" maxHeight="500" id="response-404" />
+
+#### <span className="text-orange-500">409 Conflict</span>
+<SchemaViewer file="response-409.json" maxHeight="500" id="response-409" />
+
+#### <span className="text-orange-500">412</span>
+<SchemaViewer file="response-412.json" maxHeight="500" id="response-412" />
+
+#### <span className="text-red-500">500 Internal Server Error</span>
+<SchemaViewer file="response-500.json" maxHeight="500" id="response-500" />
+
+
+
+## Architecture
+
+<NodeGraph />

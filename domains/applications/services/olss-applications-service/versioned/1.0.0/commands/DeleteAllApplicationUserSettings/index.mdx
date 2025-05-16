@@ -1,0 +1,65 @@
+---
+id: DeleteAllApplicationUserSettings
+version: 1.0.0
+name: DeleteAllApplicationUserSettings
+summary: Deletes user settings for an application.
+schemaPath: ''
+badges:
+  - content: DELETE
+    textColor: blue
+    backgroundColor: blue
+  - content: 'tag:Applications'
+    textColor: blue
+    backgroundColor: blue
+owners:
+  - fw
+sidebar:
+  badge: DELETE
+---
+## Overview
+This method is used to delete all user settings for the current user on the specified application.
+
+A user (including an administrator) is allowed to delete only those user settings that he/she owns.
+If a call was made with a non-user ticket a method will return response 400 status code.
+
+
+
+
+
+## DELETE `(/v1.0/applications/{appid}/usersettings/all)`
+
+### Parameters
+- **appid** (path) (required): It is either Application's id or unique key.
+- **Accept-Language** (header): The locale for any localized string returned by the method.
+
+Supported locales are:
+* en-US
+* ja-JP
+* pt-BR
+* ru-RU
+* zh-Hans
+
+Default is the server locale.
+
+
+
+
+### Responses
+
+#### <span className="text-orange-500">400 Bad Request</span>
+<SchemaViewer file="response-400.json" maxHeight="500" id="response-400" />
+
+#### <span className="text-orange-500">401 Unauthorized</span>
+<SchemaViewer file="response-401.json" maxHeight="500" id="response-401" />
+
+#### <span className="text-orange-500">404 Not Found</span>
+<SchemaViewer file="response-404.json" maxHeight="500" id="response-404" />
+
+#### <span className="text-red-500">500 Internal Server Error</span>
+<SchemaViewer file="response-500.json" maxHeight="500" id="response-500" />
+
+
+
+## Architecture
+
+<NodeGraph />

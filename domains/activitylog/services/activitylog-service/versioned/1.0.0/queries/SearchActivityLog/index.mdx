@@ -1,0 +1,85 @@
+---
+id: SearchActivityLog
+version: 1.0.0
+name: SearchActivityLog
+summary: ''
+schemaPath: ''
+badges:
+  - content: GET
+    textColor: blue
+    backgroundColor: blue
+  - content: 'tag:ActivityLog'
+    textColor: blue
+    backgroundColor: blue
+owners:
+  - fw
+sidebar:
+  badge: GET
+---
+## Overview
+Search for activity log entries which match the specified search criteria.
+Query may include reserved characters, which need to be URL-encoded: plus sign (+), and square brackets ([]).
+Due to background indexing, new entries could take a few seconds before they appear in the search results.
+
+
+
+
+
+## GET `(/v1.0/activitylogentries)`
+
+### Parameters
+- **offset** (query): Number of entries to skip from the beginning of the response (does not affect `totalHits`).
+- **limit** (query): Maximum number of entries to include in the response (does not affect `totalHits`).
+- **timestamp** (query): Timestamp filter.
+Only entries submitted in the given time frame are returned.
+Format: `[DATETIME,DATETIME]`, where `DATETIME` is either `YYYY-MM-DDK`, `YYYY-MM-DDTHH:mm:ssK`, or `YYYY-MM-DDThh:mm:ss.fffK`.
+Default value is a one-week range ending at the moment of the request.
+Examples: `[2019-05-23Z,2019-05-30Z]`, `[2019-05-23T14:00:00+03:00,2019-05-23T23:00:00+03:00]`.
+
+- **userApplication** (query): User-friendly name of an application (case-sensitive, exact match).
+If specified, only entries submitted by the given application are returned.
+
+- **eventLevel** (query): Event level filter (case-sensitive, exact match).
+If specified, only entries with the given event level are returned.
+
+- **descriptionOrDetails** (query): Description/details filter (case-insensitive, set of prefixes).
+If specified, only entries containing words with all of the given prefixes in details or description, are returned.
+Exact definitions of "word" and "prefix" depend on the language of the value.
+For example, filter by `"inst error"` will include `"Instrument error"` and `"Error during installation"`, but not `"Error during uninstallation"`.
+
+- **eventType** (query): Event type filter (case-sensitive, exact match).
+If specified, only entries with the given event type are returned.
+
+- **user** (query): User filter (case-insensitive, set of prefixes).
+If specified, only entries corresponding to the user with the given prefixes, are returned.
+Exact definition of "prefix" depends on the language of the value.
+For example, filter by `"ja doe"` will include `"Jane Doe (MYCOMPANY\janedoe)"` and `"Doe, Jack (MYCOMPANY\jackdoe)"`, but not `"janedoe"`.
+
+- **sort** (query): Sorting of the results (case-sensitive column name, optionally prefixed with a direction: `+` for ascending, `-` for descending).
+- **objectId** (query): Object filter.
+If specified, only entries corresponding to the object with the given ID are returned.
+
+- **onlyDeletedObjects** (query): Filter by deleted objects. If `true`, only entries corresponding to the deleted objects are returned.
+
+
+
+
+### Responses
+
+#### <span className="text-green-500">200 OK</span>
+<SchemaViewer file="response-200.json" maxHeight="500" id="response-200" />
+
+#### <span className="text-orange-500">400 Bad Request</span>
+<SchemaViewer file="response-400.json" maxHeight="500" id="response-400" />
+
+#### <span className="text-orange-500">401 Unauthorized</span>
+<SchemaViewer file="response-401.json" maxHeight="500" id="response-401" />
+
+#### <span className="text-red-500">503 Service Unavailable</span>
+<SchemaViewer file="response-503.json" maxHeight="500" id="response-503" />
+
+
+
+## Architecture
+
+<NodeGraph />

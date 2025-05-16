@@ -1,0 +1,49 @@
+{
+  "title": "Attachment",
+  "description": "An attachment payload. Following restrictions are applied:\n  * Property **type** is always required.\n  * A property of corresponding data type should be set. For example, if **type** is **System.String** then **textData** should be set.\n  * Properties **textData**, **int**, **double**, **dateTime** and **binary** are mutually exclusive, that is, one and only one should be provided.\n",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "type": {
+      "description": "Type of the attachment value. Following values are accepted:\n  * **System.String** for **textData**\n  * **System.Int32** for **int**\n  * **System.Double** for **double**\n  * **System.DateTime** for **dateTime**\n  * **System.Byte[]** for **binary**\nAdditionally it is possible to store any arbitrary data type in a serialized form. As a convention, serialized representation of an object\nis stored in **textData** while **type** property is set to a particular type.\n",
+      "type": "string"
+    },
+    "lastModifiedBy": {
+      "description": "User who last modified the attachment",
+      "type": "string",
+      "readOnly": true
+    },
+    "lastModifiedAt": {
+      "description": "When the attachment was last modified, UTC",
+      "type": "string",
+      "format": "date-time",
+      "readOnly": true
+    },
+    "textData": {
+      "description": "string or serialized object",
+      "type": "string"
+    },
+    "int": {
+      "type": "integer",
+      "nullable": true
+    },
+    "double": {
+      "type": "number",
+      "format": "double",
+      "nullable": true
+    },
+    "dateTime": {
+      "type": "string",
+      "format": "date-time",
+      "nullable": true
+    },
+    "binary": {
+      "type": "string",
+      "format": "binary"
+    }
+  },
+  "required": [
+    "type"
+  ],
+  "isSchema": true
+}

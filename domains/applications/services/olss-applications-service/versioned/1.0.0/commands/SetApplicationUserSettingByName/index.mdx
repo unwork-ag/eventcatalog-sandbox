@@ -1,0 +1,76 @@
+---
+id: SetApplicationUserSettingByName
+version: 1.0.0
+name: SetApplicationUserSettingByName
+summary: Adds or updates an application user setting.
+schemaPath: request-body.json
+badges:
+  - content: PUT
+    textColor: blue
+    backgroundColor: blue
+  - content: 'tag:Applications'
+    textColor: blue
+    backgroundColor: blue
+owners:
+  - fw
+sidebar:
+  badge: PUT
+---
+## Overview
+This method is used to add or update a user setting for the current user on a specified application.
+User settings are always associated with a particular user account.
+
+A user (including an administrator) is allowed to update
+only those user settings that he/she owns.
+
+##### Use Cases
+
+1. Save user-specific layout information for application UI
+2. Save last UI selections for users
+3. Save last printer selections for users
+
+
+
+
+
+## PUT `(/v1.0/applications/{appid}/usersettings)`
+
+### Parameters
+- **appid** (path) (required): It is either Application's id or unique key.
+- **name** (query) (required): Name of a user setting (case-insensitive)
+- **Accept-Language** (header): The locale for any localized string returned by the method.
+
+Supported locales are:
+* en-US
+* ja-JP
+* pt-BR
+* ru-RU
+* zh-Hans
+
+Default is the server locale.
+
+
+
+### Request Body
+<SchemaViewer file="request-body.json" maxHeight="500" id="request-body" />
+
+
+### Responses
+
+#### <span className="text-orange-500">400 Bad Request</span>
+<SchemaViewer file="response-400.json" maxHeight="500" id="response-400" />
+
+#### <span className="text-orange-500">401 Unauthorized</span>
+<SchemaViewer file="response-401.json" maxHeight="500" id="response-401" />
+
+#### <span className="text-orange-500">404 Not Found</span>
+<SchemaViewer file="response-404.json" maxHeight="500" id="response-404" />
+
+#### <span className="text-red-500">500 Internal Server Error</span>
+<SchemaViewer file="response-500.json" maxHeight="500" id="response-500" />
+
+
+
+## Architecture
+
+<NodeGraph />

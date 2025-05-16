@@ -1,0 +1,74 @@
+---
+id: GetApplicationById
+version: 2.0.0
+name: GetApplicationById
+summary: Get the specified application
+schemaPath: ''
+badges:
+  - content: GET
+    textColor: blue
+    backgroundColor: blue
+  - content: 'tag:Applications'
+    textColor: blue
+    backgroundColor: blue
+owners:
+  - fw
+sidebar:
+  badge: GET
+---
+## Overview
+Get all or some parts of the specified application.
+
+##### Use Cases
+
+1. Retrieve the permissions and permissionGroups for an application to see if new permissions need to be registered.
+2. Retrieve the drivers for an application to see if a new driver needs to be registered.
+3. Retrieve the properties for an application to determine when it was last updated.
+
+
+
+
+
+## GET `(/v2.0/applications/{appid})`
+
+### Parameters
+- **appid** (path) (required): It is either Application's id or unique key.
+- **include** (query): Specifies which information should be included in the response.
+Supported values (case-sensitive, comma-separated) prop - the properties for the Application perm -  the permissions defined for the Application, grouped by PermissionGroup id - the instrument drivers defined for the Application ic - the instrument controllers configured for the Application *No extra spaces may be included in the comma-delimited string.*
+All properties and related objects for each application are returned in the following cases - Include parameter is empty; - Include parameter is omitted; - Include parameter is * character.
+- **Accept-Language** (header): The locale for any localized string returned by the method.
+
+Supported locales are:
+* en-US
+* ja-JP
+* pt-BR
+* ru-RU
+* zh-Hans
+
+Default is the server locale.
+
+
+
+
+### Responses
+
+#### <span className="text-green-500">200 OK</span>
+<SchemaViewer file="response-200.json" maxHeight="500" id="response-200" />
+
+#### <span className="text-orange-500">400 Bad Request</span>
+<SchemaViewer file="response-400.json" maxHeight="500" id="response-400" />
+
+#### <span className="text-orange-500">401 Unauthorized</span>
+<SchemaViewer file="response-401.json" maxHeight="500" id="response-401" />
+
+#### <span className="text-orange-500">404 Not Found</span>
+<SchemaViewer file="response-404.json" maxHeight="500" id="response-404" />
+
+#### <span className="text-red-500">500 Internal Server Error</span>
+<SchemaViewer file="response-500.json" maxHeight="500" id="response-500" />
+
+
+
+## Architecture
+
+<NodeGraph />

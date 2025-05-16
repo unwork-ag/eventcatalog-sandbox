@@ -1,0 +1,79 @@
+---
+id: DeleteApplication
+version: 1.0.0
+name: DeleteApplication
+summary: Delete an existing application
+schemaPath: ''
+badges:
+  - content: DELETE
+    textColor: blue
+    backgroundColor: blue
+  - content: 'tag:Applications'
+    textColor: blue
+    backgroundColor: blue
+owners:
+  - fw
+sidebar:
+  badge: DELETE
+---
+## Overview
+This method is used to delete the application specified by the **appid** parameter. Either
+the **id** or **uniqueKey** properties may be used for this parameter.
+
+Drivers and permissions will be removed with their associated application.
+
+It is an error to try and delete an Application currently associated with an Instrument or
+InstrumentController. The Instrument or InstrumentController must first be deleted before
+deleting the Application.
+
+The caller must have been granted Security_Manage permission in order to delete an application.
+
+A call made with a non-user token will return status code 403.
+
+
+
+
+
+## DELETE `(/v1.0/applications/{appid})`
+
+### Parameters
+- **appid** (path) (required): It is either Application's id or unique key.
+- **Accept-Language** (header): The locale for any localized string returned by the method.
+
+Supported locales are:
+* en-US
+* ja-JP
+* pt-BR
+* ru-RU
+* zh-Hans
+
+Default is the server locale.
+
+
+
+
+### Responses
+
+#### <span className="text-orange-500">400 Bad Request</span>
+<SchemaViewer file="response-400.json" maxHeight="500" id="response-400" />
+
+#### <span className="text-orange-500">401 Unauthorized</span>
+<SchemaViewer file="response-401.json" maxHeight="500" id="response-401" />
+
+#### <span className="text-orange-500">403 Forbidden</span>
+<SchemaViewer file="response-403.json" maxHeight="500" id="response-403" />
+
+#### <span className="text-orange-500">404 Not Found</span>
+<SchemaViewer file="response-404.json" maxHeight="500" id="response-404" />
+
+#### <span className="text-orange-500">409 Conflict</span>
+<SchemaViewer file="response-409.json" maxHeight="500" id="response-409" />
+
+#### <span className="text-red-500">500 Internal Server Error</span>
+<SchemaViewer file="response-500.json" maxHeight="500" id="response-500" />
+
+
+
+## Architecture
+
+<NodeGraph />

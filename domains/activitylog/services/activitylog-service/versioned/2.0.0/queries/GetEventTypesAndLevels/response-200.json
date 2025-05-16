@@ -1,0 +1,37 @@
+{
+  "type": "object",
+  "title": "EventTypesAndLevelsResponse",
+  "additionalProperties": false,
+  "properties": {
+    "eventTypes": {
+      "type": "object",
+      "description": "keyword-displayname pairs",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "eventLevels": {
+      "type": "object",
+      "description": "keyword-displayname pairs",
+      "additionalProperties": {
+        "type": "string"
+      }
+    }
+  },
+  "example": {
+    "eventTypes": {
+      "Access": "Acesso",
+      "Configuration": "Configuração",
+      "General": "Geral",
+      "Instrument": "Instrumento",
+      "Security": "Segurança"
+    },
+    "eventLevels": {
+      "Error": "Erro",
+      "Warning": "Aviso",
+      "Info": "Info",
+      "Normal": "Normal"
+    }
+  },
+  "isSchema": true
+}

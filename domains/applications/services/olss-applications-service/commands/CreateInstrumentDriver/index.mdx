@@ -1,0 +1,84 @@
+---
+id: CreateInstrumentDriver
+version: 1.0.0
+name: CreateInstrumentDriver
+summary: Create an instrument driver for the specified application.
+schemaPath: request-body.json
+badges:
+  - content: POST
+    textColor: blue
+    backgroundColor: blue
+  - content: 'tag:Applications'
+    textColor: blue
+    backgroundColor: blue
+owners:
+  - fw
+sidebar:
+  badge: POST
+---
+## Overview
+This method is used to create an instrument driver for the specified application.
+A calling user will need to have been granted Components_Manage permission to create
+an instrument driver and also Controller_Edit permission in case of icons were provided.
+
+Each instrument driver has a unique key. This method determines whether an instrument driver
+already exists with the key specified in the prototype. If so, the method returns a 409 status
+code.
+
+##### Use Cases
+
+1. During upgrade, an application creates a newly supported instrument driver.
+
+
+
+
+
+## POST `(/v1.0/applications/{appid}/drivers)`
+
+### Parameters
+- **appid** (path) (required): It is either Application's id or unique key.
+- **Accept-Language** (header): The locale for any localized string returned by the method.
+
+Supported locales are:
+* en-US
+* ja-JP
+* pt-BR
+* ru-RU
+* zh-Hans
+
+Default is the server locale.
+
+
+
+### Request Body
+<SchemaViewer file="request-body.json" maxHeight="500" id="request-body" />
+
+
+### Responses
+
+#### <span className="text-green-500">201 Created</span>
+<SchemaViewer file="response-201.json" maxHeight="500" id="response-201" />
+
+#### <span className="text-orange-500">400 Bad Request</span>
+<SchemaViewer file="response-400.json" maxHeight="500" id="response-400" />
+
+#### <span className="text-orange-500">401 Unauthorized</span>
+<SchemaViewer file="response-401.json" maxHeight="500" id="response-401" />
+
+#### <span className="text-orange-500">403 Forbidden</span>
+<SchemaViewer file="response-403.json" maxHeight="500" id="response-403" />
+
+#### <span className="text-orange-500">404 Not Found</span>
+<SchemaViewer file="response-404.json" maxHeight="500" id="response-404" />
+
+#### <span className="text-orange-500">409 Conflict</span>
+<SchemaViewer file="response-409.json" maxHeight="500" id="response-409" />
+
+#### <span className="text-red-500">500 Internal Server Error</span>
+<SchemaViewer file="response-500.json" maxHeight="500" id="response-500" />
+
+
+
+## Architecture
+
+<NodeGraph />

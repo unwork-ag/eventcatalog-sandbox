@@ -1,0 +1,134 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "results": {
+      "type": "array",
+      "nullable": true,
+      "items": {
+        "allOf": [
+          {
+            "allOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "userApplication"
+                ],
+                "properties": {
+                  "userApplication": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maximum": 50,
+                    "description": "The user-friendly name of the application."
+                  },
+                  "clientDevice": {
+                    "type": "string",
+                    "maximum": 50,
+                    "description": "The name of the device the application (or browser) is running on (whether computer or mobile device)."
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "description",
+                  "eventLevel",
+                  "eventType"
+                ],
+                "properties": {
+                  "applicationDataReference": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "An optional JSON-formatted set of reference information that can be used to scope the activity log entry to specific objects/actions/files."
+                  },
+                  "description": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maximum": 450
+                  },
+                  "details": {
+                    "type": "string",
+                    "nullable": true,
+                    "maximum": 2000,
+                    "description": "The full details of the activity log entry."
+                  },
+                  "eventLevel": {
+                    "type": "string",
+                    "description": "The event level for the activity log entry. This can be Info, Warning or Error and is case sensitive.",
+                    "example": "Error"
+                  },
+                  "eventType": {
+                    "type": "string",
+                    "description": "The category or type to which the event relates. This can be Access, Configuration, General, Instrument and Security. This value is case sensitive.",
+                    "example": "Instrument"
+                  },
+                  "objectId": {
+                    "type": "integer",
+                    "format": "int32",
+                    "nullable": true,
+                    "description": "Only applicable to actions made against Shared Services objects. This should be the Id of the Shared Services object that was interacted with."
+                  },
+                  "sampleId": {
+                    "type": "string",
+                    "nullable": true,
+                    "maximum": 255,
+                    "description": "The ID for the sample. This field is also the appropriate place to provide the LIMS ID value (if applicable)."
+                  },
+                  "bufferingDelay": {
+                    "type": "string",
+                    "nullable": true,
+                    "description": "Time difference between ActivityLog creation and sending it to server. (ISO 8601)",
+                    "example": "PT3H30M5S"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "nullable": true,
+                    "maximum": 1024,
+                    "description": "The reason for the activity log entry."
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "integer",
+                "format": "int32",
+                "description": "Activity log entry identifier."
+              },
+              "timestamp": {
+                "type": "string",
+                "format": "date-time",
+                "description": "This pseudo-property is of type DateTime and represents the time the activity log entry was created."
+              },
+              "objectDeleted": {
+                "type": "boolean",
+                "nullable": true,
+                "description": "The flag indicates whether object was deleted or not."
+              },
+              "user": {
+                "type": "string",
+                "nullable": true,
+                "description": "User who submitted the activity log entry."
+              }
+            }
+          }
+        ]
+      }
+    },
+    "totalHits": {
+      "type": "integer",
+      "format": "int32"
+    },
+    "resultsLimitedByPermissions": {
+      "type": "boolean",
+      "description": "The flag indicates whether limitations in user permissions prevented seeing some or all Activity Log content."
+    }
+  },
+  "isSchema": true
+}

@@ -1,0 +1,11 @@
+{
+  "type": "array",
+  "example": [
+    "first user setting",
+    "second user setting"
+  ],
+  "items": {
+    "type": "string"
+  },
+  "isSchema": true
+}

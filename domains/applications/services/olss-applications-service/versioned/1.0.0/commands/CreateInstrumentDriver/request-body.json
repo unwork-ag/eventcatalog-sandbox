@@ -1,0 +1,44 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "name",
+    "uniqueKey"
+  ],
+  "properties": {
+    "uniqueKey": {
+      "type": "string",
+      "description": "Unique key that can be used to identify an instrument driver."
+    },
+    "attributes": {
+      "description": "Additional properties. A collection of key/value pairs where key is always string and value can be any type.",
+      "type": "object",
+      "additionalProperties": {
+        "type": "object"
+      }
+    },
+    "name": {
+      "type": "string",
+      "example": "GCMS001",
+      "maxLength": 255
+    },
+    "description": {
+      "type": "string",
+      "example": "GC/MS in lab123",
+      "nullable": true,
+      "maxLength": 512
+    },
+    "smallIcon": {
+      "type": "string",
+      "format": "binary",
+      "description": "Small icon encoded in Base64 string.",
+      "nullable": true
+    },
+    "largeIcon": {
+      "type": "string",
+      "format": "binary",
+      "description": "Large icon encoded in Base64 string.",
+      "nullable": true
+    }
+  }
+}

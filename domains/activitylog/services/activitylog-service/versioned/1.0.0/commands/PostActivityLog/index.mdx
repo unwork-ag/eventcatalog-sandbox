@@ -1,0 +1,49 @@
+---
+id: PostActivityLog
+version: 1.0.0
+name: PostActivityLog
+summary: Create a new activity log entry with the specified properties.
+schemaPath: request-body.json
+badges:
+  - content: POST
+    textColor: blue
+    backgroundColor: blue
+  - content: 'tag:ActivityLog'
+    textColor: blue
+    backgroundColor: blue
+owners:
+  - fw
+sidebar:
+  badge: POST
+---
+## Overview
+Create a new activity log entry with the specified properties.
+
+
+
+
+## POST `(/v1.0/activitylogentries)`
+
+
+
+
+### Request Body
+<SchemaViewer file="request-body.json" maxHeight="500" id="request-body" />
+
+
+### Responses
+
+#### <span className="text-orange-500">400 Bad Request</span>
+<SchemaViewer file="response-400.json" maxHeight="500" id="response-400" />
+
+#### <span className="text-orange-500">401 Unauthorized</span>
+<SchemaViewer file="response-401.json" maxHeight="500" id="response-401" />
+
+#### <span className="text-red-500">503 Service Unavailable</span>
+<SchemaViewer file="response-503.json" maxHeight="500" id="response-503" />
+
+
+
+## Architecture
+
+<NodeGraph />

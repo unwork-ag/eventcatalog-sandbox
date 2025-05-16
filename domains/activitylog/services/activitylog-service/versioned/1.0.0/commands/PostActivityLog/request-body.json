@@ -1,0 +1,71 @@
+{
+  "allOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "userApplication"
+      ],
+      "properties": {
+        "userApplication": {
+          "type": "string",
+          "minLength": 1,
+          "maximum": 50
+        },
+        "clientDevice": {
+          "type": "string",
+          "maximum": 50
+        }
+      }
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "description",
+        "eventLevel",
+        "eventType"
+      ],
+      "properties": {
+        "applicationDataReference": {
+          "type": "string",
+          "nullable": true
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "maximum": 450
+        },
+        "details": {
+          "type": "string",
+          "nullable": true,
+          "maximum": 2000
+        },
+        "eventLevel": {
+          "type": "string",
+          "example": "Error"
+        },
+        "eventType": {
+          "type": "string",
+          "example": "Instrument"
+        },
+        "objectId": {
+          "type": "integer",
+          "format": "int32",
+          "nullable": true
+        },
+        "sampleId": {
+          "type": "string",
+          "nullable": true,
+          "maximum": 255
+        },
+        "bufferingDelay": {
+          "type": "string",
+          "nullable": true,
+          "description": "Time difference between ActivityLog creation and sending it to server. (ISO 8601)",
+          "example": "PT3H30M5S"
+        }
+      }
+    }
+  ]
+}

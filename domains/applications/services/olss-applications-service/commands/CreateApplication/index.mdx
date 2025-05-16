@@ -1,0 +1,87 @@
+---
+id: CreateApplication
+version: 1.0.0
+name: CreateApplication
+summary: Adds an application.
+schemaPath: request-body.json
+badges:
+  - content: POST
+    textColor: blue
+    backgroundColor: blue
+  - content: 'tag:Applications'
+    textColor: blue
+    backgroundColor: blue
+owners:
+  - fw
+sidebar:
+  badge: POST
+---
+## Overview
+This method is used to add an application. A calling user will need to
+have been granted the following permissions:
+- A minimal required set is *Components_Manage* and *Controller_Edit* to be able to create an application itself and drivers.
+- Optionally a caller needs *Security_Manage* permission in order to deploy permissions and permission groups if any.
+- System Administrators are able to create all parts of an application.
+
+The following will result in an error and a 409 status code:
+1. An application with the specified unique key already exists
+2. An application with the specified name already exists
+3. A permission with a unique key that matches one of the specified permissions already exists
+4. A driver with a unique key that matches one of the specified drivers already exists
+If an error occurs because of a conflict with application unique key, the method returns a 409 status
+code.
+
+If an application is returned in the response, an ETag will be returned for the application.
+##### Use Cases
+
+1. Create a new application, including the permission and driver objects associated with the application.
+
+
+
+
+
+## POST `(/v1.0/applications)`
+
+### Parameters
+- **Accept-Language** (header): The locale for any localized string returned by the method.
+
+Supported locales are:
+* en-US
+* ja-JP
+* pt-BR
+* ru-RU
+* zh-Hans
+
+Default is the server locale.
+
+
+
+### Request Body
+<SchemaViewer file="request-body.json" maxHeight="500" id="request-body" />
+
+
+### Responses
+
+#### <span className="text-green-500">201 Created</span>
+<SchemaViewer file="response-201.json" maxHeight="500" id="response-201" />
+
+#### <span className="text-orange-500">400 Bad Request</span>
+<SchemaViewer file="response-400.json" maxHeight="500" id="response-400" />
+
+#### <span className="text-orange-500">401 Unauthorized</span>
+<SchemaViewer file="response-401.json" maxHeight="500" id="response-401" />
+
+#### <span className="text-orange-500">403 Forbidden</span>
+<SchemaViewer file="response-403.json" maxHeight="500" id="response-403" />
+
+#### <span className="text-orange-500">409 Conflict</span>
+<SchemaViewer file="response-409.json" maxHeight="500" id="response-409" />
+
+#### <span className="text-red-500">500 Internal Server Error</span>
+<SchemaViewer file="response-500.json" maxHeight="500" id="response-500" />
+
+
+
+## Architecture
+
+<NodeGraph />

@@ -1,0 +1,364 @@
+{
+  "type": "object",
+  "description": "Applications",
+  "additionalProperties": false,
+  "properties": {
+    "applications": {
+      "type": "array",
+      "description": "List of Applications",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id"
+        ],
+        "properties": {
+          "uniqueKey": {
+            "type": "string",
+            "description": "Unique string for the application"
+          },
+          "areProjectsSupported": {
+            "type": "boolean",
+            "description": "Whether the application uses projects"
+          },
+          "areInstrumentControlled": {
+            "type": "boolean",
+            "description": "Whether the application has instruments"
+          },
+          "etag": {
+            "type": "string",
+            "description": "ETag is used to detect optimistic locking failures."
+          },
+          "permissionGroups": {
+            "type": "array",
+            "description": "List of permission groups containing the permissions added by this application",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "name",
+                "permissions"
+              ],
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "permissions": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "id",
+                      "key",
+                      "name",
+                      "type"
+                    ],
+                    "properties": {
+                      "id": {
+                        "type": "integer",
+                        "format": "int32"
+                      },
+                      "key": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      },
+                      "description": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "groupId": {
+                        "type": "integer",
+                        "format": "int32",
+                        "nullable": true,
+                        "example": 1
+                      },
+                      "type": {
+                        "type": "string",
+                        "description": "List of possible permission types:\n* administrative\n* instrument\n* project\n",
+                        "example": "administrative"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "orphanPermissions": {
+            "type": "array",
+            "description": "Permissions added by this application that do not have an associated permission group",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "key",
+                "name",
+                "type"
+              ],
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "key": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "groupId": {
+                  "type": "integer",
+                  "format": "int32",
+                  "nullable": true,
+                  "example": 1
+                },
+                "type": {
+                  "type": "string",
+                  "description": "List of possible permission types:\n* administrative\n* instrument\n* project\n",
+                  "example": "administrative"
+                }
+              }
+            }
+          },
+          "attributes": {
+            "description": "Additional properties. A collection of key/value pairs where key is always string and value can be any type.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "object"
+            }
+          },
+          "id": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "parentId": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "readOnly": true
+          },
+          "createdBy": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          },
+          "modifiedDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "readOnly": true
+          },
+          "lastModifiedBy": {
+            "type": "string",
+            "nullable": true,
+            "readOnly": true
+          }
+        }
+      }
+    },
+    "instrumentControllers": {
+      "type": "array",
+      "description": "List of Instrument Controllers",
+      "nullable": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "name",
+          "parentId",
+          "createdDate",
+          "createdBy",
+          "canBeControlledRemotely",
+          "networkLocation"
+        ],
+        "properties": {
+          "comment": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          },
+          "canBeControlledRemotely": {
+            "type": "boolean",
+            "description": "Can the instrument controller be controlled remotely"
+          },
+          "applicationId": {
+            "type": "integer",
+            "format": "int32",
+            "description": "ID of the application associated with the instrument controller",
+            "nullable": true
+          },
+          "installedDrivers": {
+            "type": "array",
+            "description": "List of IDs for the instrument drivers associated with the instrument controller",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "networkLocation": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "port"
+            ],
+            "properties": {
+              "ipAddress": {
+                "type": "string"
+              },
+              "hostname": {
+                "type": "string"
+              },
+              "port": {
+                "format": "int32",
+                "type": "integer"
+              }
+            }
+          },
+          "attributes": {
+            "description": "A collection of location specific properties.\nEvery property represents a key/value pair where key is a string and value is one of the following types:\n* String\n* Signed 32-bit integers\n* Signed 64-bit integers (long type)\n* Floating-point numbers with double precision\n* Boolean\n* MixedDictionary\n",
+            "type": "object",
+            "additionalProperties": {
+              "type": "object"
+            }
+          },
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "parentId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "createdDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "modifiedDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastModifiedBy": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "instrumentDrivers": {
+      "type": "array",
+      "description": "List of Instrument Drivers",
+      "nullable": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "name",
+          "parentId",
+          "createdDate",
+          "createdBy",
+          "uniqueKey"
+        ],
+        "properties": {
+          "uniqueKey": {
+            "type": "string",
+            "description": "Unique key that can be used to identify an instrument driver"
+          },
+          "applicationId": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "smallIcon": {
+            "type": "string",
+            "format": "binary",
+            "description": "Small icon encoded in Base64 string.",
+            "nullable": true
+          },
+          "largeIcon": {
+            "type": "string",
+            "format": "binary",
+            "description": "Large icon encoded in Base64 string.",
+            "nullable": true
+          },
+          "attributes": {
+            "description": "A collection of location specific properties.\nEvery property represents a key/value pair where key is a string and value is one of the following types:\n* String\n* Signed 32-bit integers\n* Signed 64-bit integers (long type)\n* Floating-point numbers with double precision\n* Boolean\n* MixedDictionary\n",
+            "type": "object",
+            "additionalProperties": {
+              "type": "object"
+            }
+          },
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "parentId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "createdDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": "string"
+          },
+          "modifiedDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastModifiedBy": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "isSchema": true
+}

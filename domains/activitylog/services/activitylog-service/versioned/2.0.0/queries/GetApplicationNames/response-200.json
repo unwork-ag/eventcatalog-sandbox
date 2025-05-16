@@ -1,0 +1,18 @@
+{
+  "type": "object",
+  "title": "ApplicationNamesResponse",
+  "additionalProperties": false,
+  "properties": {
+    "applicationNames": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "example": [
+        "Control Panel",
+        "CDS"
+      ]
+    }
+  },
+  "isSchema": true
+}

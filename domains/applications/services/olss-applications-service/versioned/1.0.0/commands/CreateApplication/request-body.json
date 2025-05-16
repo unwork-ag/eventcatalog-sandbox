@@ -1,0 +1,143 @@
+{
+  "type": "object",
+  "description": "Defines a prototype to create an application.",
+  "additionalProperties": false,
+  "required": [
+    "uniqueKey",
+    "name"
+  ],
+  "properties": {
+    "uniqueKey": {
+      "type": "string",
+      "description": "Unique string for the application"
+    },
+    "areProjectsSupported": {
+      "type": "boolean",
+      "description": "Whether the application uses projects"
+    },
+    "areInstrumentsControlled": {
+      "type": "boolean",
+      "description": "Whether the application has instruments"
+    },
+    "attributes": {
+      "description": "Additional properties. A collection of key/value pairs where key is always string and value can be any type.",
+      "type": "object",
+      "additionalProperties": {
+        "type": "object"
+      }
+    },
+    "name": {
+      "type": "string",
+      "maxLength": 255
+    },
+    "description": {
+      "type": "string",
+      "nullable": true,
+      "maxLength": 512
+    },
+    "permissionGroups": {
+      "type": "array",
+      "description": "List of permission groups containing the permissions added by this application",
+      "nullable": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "permissions": {
+            "type": "array",
+            "description": "List of post permission models",
+            "nullable": true,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "key",
+                "name",
+                "type"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "description": "Identifier that is unique within an application. The uniqueKey is created by concatenating the application key and permission key."
+                },
+                "name": {
+                  "type": "string",
+                  "maxLength": 255
+                },
+                "description": {
+                  "type": "string",
+                  "maxLength": 512
+                },
+                "type": {
+                  "type": "string",
+                  "description": "List of possible permission types:\n* administrative\n* instrument\n* project\n",
+                  "example": "administrative"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "instrumentDrivers": {
+      "type": "array",
+      "description": "List of Instrument Drivers",
+      "nullable": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "uniqueKey"
+        ],
+        "properties": {
+          "uniqueKey": {
+            "type": "string",
+            "description": "Unique key that can be used to identify an instrument driver."
+          },
+          "attributes": {
+            "description": "Additional properties. A collection of key/value pairs where key is always string and value can be any type.",
+            "type": "object",
+            "additionalProperties": {
+              "type": "object"
+            }
+          },
+          "name": {
+            "type": "string",
+            "example": "GCMS001",
+            "maxLength": 255
+          },
+          "description": {
+            "type": "string",
+            "example": "GC/MS in lab123",
+            "nullable": true,
+            "maxLength": 512
+          },
+          "smallIcon": {
+            "type": "string",
+            "format": "binary",
+            "description": "Small icon encoded in Base64 string.",
+            "nullable": true
+          },
+          "largeIcon": {
+            "type": "string",
+            "format": "binary",
+            "description": "Large icon encoded in Base64 string.",
+            "nullable": true
+          }
+        }
+      }
+    }
+  }
+}

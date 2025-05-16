@@ -1,0 +1,38 @@
+{
+  "type": "object",
+  "description": "Defines a prototype to update an application.",
+  "additionalProperties": false,
+  "required": [
+    "name",
+    "description",
+    "attributes",
+    "areProjectsSupported",
+    "areInstrumentsControlled"
+  ],
+  "properties": {
+    "areProjectsSupported": {
+      "type": "boolean",
+      "description": "Whether the application uses projects"
+    },
+    "areInstrumentsControlled": {
+      "type": "boolean",
+      "description": "Whether the application has instruments"
+    },
+    "attributes": {
+      "description": "A collection of location specific properties.\nEvery property represents a key/value pair where key is a string and value is one of the following types:\n* String\n* Signed 32-bit integers\n* Signed 64-bit integers (long type)\n* Floating-point numbers with double precision\n* Boolean\n* MixedDictionary\n",
+      "type": "object",
+      "additionalProperties": {
+        "type": "object"
+      }
+    },
+    "name": {
+      "type": "string",
+      "maxLength": 255
+    },
+    "description": {
+      "type": "string",
+      "nullable": true,
+      "maxLength": 512
+    }
+  }
+}

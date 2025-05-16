@@ -1,0 +1,72 @@
+---
+id: GetEventTypesAndLevels
+version: 2.0.0
+name: GetEventTypesAndLevels
+summary: Return defined event types and event levels
+schemaPath: ''
+badges:
+  - content: GET
+    textColor: blue
+    backgroundColor: blue
+  - content: 'tag:ActivityLog'
+    textColor: blue
+    backgroundColor: blue
+owners:
+  - fw
+sidebar:
+  badge: GET
+---
+## Overview
+Two important ways to filter Activity Log entries are by the type of
+event represented by the entry, e.g. Instrument or Security, and the
+level of the entry, e.g. Info or Error. This endpoint allows the
+caller to retrieve keyword-displayname pairs for each type and level.
+The caller supplies the culture info for the displaynames using the
+Accept-Language header.
+
+Keywords are used when creating or searching Activity Log entries.
+Display names are presented to an end user in filter dialogs.
+
+Only tokens with user identity (user token, user ticket) are authorized
+to retrieve this content. Others will result in Unauthorized (403).
+
+
+
+
+
+## GET `(/v2.0/eventtypesandlevels)`
+
+### Parameters
+- **Accept-Language** (header): The locale for any localized string returned by the method.
+
+Supported locales are:
+* en-US
+* ja-JP
+* pt-BR
+* ru-RU
+* zh-Hans
+
+Default is the server locale.
+
+
+
+
+### Responses
+
+#### <span className="text-green-500">200 OK</span>
+<SchemaViewer file="response-200.json" maxHeight="500" id="response-200" />
+
+#### <span className="text-orange-500">401 Unauthorized</span>
+<SchemaViewer file="response-401.json" maxHeight="500" id="response-401" />
+
+#### <span className="text-orange-500">403 Forbidden</span>
+<SchemaViewer file="response-403.json" maxHeight="500" id="response-403" />
+
+#### <span className="text-red-500">503 Service Unavailable</span>
+<SchemaViewer file="response-503.json" maxHeight="500" id="response-503" />
+
+
+
+## Architecture
+
+<NodeGraph />

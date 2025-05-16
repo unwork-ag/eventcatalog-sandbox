@@ -1,0 +1,61 @@
+---
+id: GetApplications
+version: 1.0.0
+name: GetApplications
+summary: Get all applications in the system
+schemaPath: ''
+badges:
+  - content: GET
+    textColor: blue
+    backgroundColor: blue
+  - content: 'tag:Applications'
+    textColor: blue
+    backgroundColor: blue
+owners:
+  - fw
+sidebar:
+  badge: GET
+---
+## GET `(/v1.0/applications)`
+
+### Parameters
+- **include** (query): Specifies which information should be included in the response.
+Supported values (case-sensitive, comma-separated) prop - the properties for the Application perm -  the permissions defined for the Application, grouped by PermissionGroup id - the instrument drivers defined for the Application ic - the instrument controllers configured for the Application *No extra spaces may be included in the comma-delimited string.*
+All properties and related objects for each application are returned in the following cases - Include parameter is empty; - Include parameter is omitted; - Include parameter is * character.
+- **Accept-Language** (header): The locale for any localized string returned by the method.
+
+Supported locales are:
+* en-US
+* ja-JP
+* pt-BR
+* ru-RU
+* zh-Hans
+
+Default is the server locale.
+
+
+
+
+### Responses
+
+#### <span className="text-green-500">200 OK</span>
+Applications
+<SchemaViewer file="response-200.json" maxHeight="500" id="response-200" />
+
+#### <span className="text-orange-500">400 Bad Request</span>
+<SchemaViewer file="response-400.json" maxHeight="500" id="response-400" />
+
+#### <span className="text-orange-500">401 Unauthorized</span>
+<SchemaViewer file="response-401.json" maxHeight="500" id="response-401" />
+
+#### <span className="text-red-500">500 Internal Server Error</span>
+<SchemaViewer file="response-500.json" maxHeight="500" id="response-500" />
+
+#### <span className="text-red-500">503 Service Unavailable</span>
+<SchemaViewer file="response-503.json" maxHeight="500" id="response-503" />
+
+
+
+## Architecture
+
+<NodeGraph />

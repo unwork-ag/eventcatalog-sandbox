@@ -1,0 +1,1380 @@
+components:
+  parameters:
+    DataObjectId:
+      name: id
+      in: path
+      description: Identifier of an object
+      required: true
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+    ObjectIdOrGlobalId:
+      name: id
+      in: path
+      description: Identifier of an object (Id or GlobalId)
+      required: true
+      schema:
+        type: string
+        minLength: 1
+    UserId:
+      name: id
+      in: path
+      description: Identifier of the user
+      required: true
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+    PrincipalIdOrGlobalId:
+      name: id
+      in: path
+      description: Identifier of a security principal
+      required: true
+      schema:
+        type: string
+        minLength: 1
+    AcceptLanguage:
+      name: Accept-Language
+      in: header
+      description: |-
+        The locale for any localized string returned by the method.
+
+        Supported locales are:
+        * en-US
+        * ja-JP
+        * pt-BR
+        * ru-RU
+        * zh-Hans
+
+        Default is the server locale.
+      required: false
+      schema:
+        type: string
+    IfMatch:
+      name: If-Match
+      in: header
+      description: |-
+        If-Match request header should be specified with the etag of the entity. It is used to detect optimistic locking failures.
+      required: true
+      schema:
+        type: string
+    AttachmentName:
+      name: name
+      in: query
+      description: Name of the attachment (case-insensitive)
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 255
+    UserSettingName:
+      in: query
+      name: name
+      description: Name of a user setting (case-insensitive)
+      required: true
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 256
+    UserIdOrGlobalId:
+      in: query
+      name: id
+      description: Identifier of a user (Id or GlobalId)
+      required: true
+      schema:
+        type: string
+        minLength: 1
+    ObjectGlobalId:
+      in: path
+      name: globalId
+      description: GlobalId of an object.
+      required: true
+      schema:
+        type: string
+        maxLength: 50
+    UserObjectIdOrGlobalId:
+      in: path
+      name: userId
+      description: Identifier of an object (Id or GlobalId)
+      required: true
+      schema:
+        type: string
+        minLength: 1
+    ApplicationId:
+      name: appid
+      in: path
+      description: It is either Application's id or unique key.
+      required: true
+      schema:
+        type: string
+        minLength: 1
+      examples:
+        idExample:
+          summary: "Application's id."
+          value: "1"
+        uniqueKeyExample:
+          summary: "Application's uniqueKey."
+          value: "olcds"
+  schemas:
+    ApiError:
+      title: ApiError
+      type: object
+      additionalProperties: false
+      properties:
+        errorCode:
+          description: An enum of Shared Services-specific errors.
+          type: string
+          enum:
+            - Undefined
+            - NotFound  # obsoleted in favor of ObjectNotFound
+            - Unauthorized
+            - NotImplemented
+            - Forbidden
+            - InternalServerError
+            - ObjectNotFound
+            - InvalidParameter
+            - StorageUnavailable
+            - ExternalStorageError
+            - ThirdPartySystemError
+            - AuthenticationFailed
+            - InvalidToken
+            - IncorrectLoginOrPassword
+            - UserIsDisabled
+            - TemporarilyBlocked
+            - MustChangePassword
+            - AccountIsExpired
+            - PasswordIsEmpty
+            - BearerTokenNotProvided
+            - InvalidTokenSignature
+            - TokenExpired
+            - AuthenticationProviderNotAuthenticated
+            - AuthenticationProviderNotAvailable
+            - UserNotMapped
+            - EmptyUserApplication
+            - ActivityLogNotEnabled
+            - PasswordIsTooShort
+            - PasswordMustBeNew
+            - UserCannotChangePassword
+            - InvalidOperation
+            - IndexCorrupted
+            - IndexNotReady
+        error:
+          description: Simple error message, not localized.
+          type: string
+        localizedError:
+          description: Localized error message, potentially more detailed, generally only provided for errors relevant to an end user.
+          type: string
+    GlobalId:
+      description: GlobalId of an object.
+      type: string
+      maxLength: 50
+      readOnly: true
+      example: 3ea95cde-14e7-4303-a1ca-75d4fc3dc827
+    EtagData:
+      description: The dictionary represents key-value pairs where each key is globalId of entity and each value is ETag.
+      type: object
+      additionalProperties:
+        type: string
+    Attachment:
+      title: Attachment
+      description: |
+        An attachment payload. Following restrictions are applied:
+          * Property **type** is always required.
+          * A property of corresponding data type should be set. For example, if **type** is **System.String** then **textData** should be set.
+          * Properties **textData**, **int**, **double**, **dateTime** and **binary** are mutually exclusive, that is, one and only one should be provided.
+      type: object
+      additionalProperties: false
+      properties:
+        type:
+          description: |
+            Type of the attachment value. Following values are accepted:
+              * **System.String** for **textData**
+              * **System.Int32** for **int**
+              * **System.Double** for **double**
+              * **System.DateTime** for **dateTime**
+              * **System.Byte[]** for **binary**
+            Additionally it is possible to store any arbitrary data type in a serialized form. As a convention, serialized representation of an object
+            is stored in **textData** while **type** property is set to a particular type.
+          type: string
+        lastModifiedBy:
+          description: User who last modified the attachment
+          type: string
+          readOnly: true
+        lastModifiedAt:
+          description: When the attachment was last modified, UTC
+          type: string
+          format: date-time
+          readOnly: true
+        textData:
+          description: string or serialized object
+          type: string
+        int:
+          type: integer
+          nullable: true
+        double:
+          type: number
+          format: double
+          nullable: true
+        dateTime:
+          type: string
+          format: date-time
+          nullable: true
+        binary:
+          type: string
+          format: binary
+      required:
+        - type
+    User:
+      title: User
+      description: User and its details
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          description: User identifier
+          type: integer
+        globalId:
+          format: string
+          type: string
+          maxLength: 255
+          nullable: true
+          description: Globally unique user identifier. If the user was mapped/created prior 3.6 then null.
+        name:
+          description: User name
+          type: string
+        fullName:
+          description: Full user name
+          type: string
+          nullable: true
+        domain:
+          description: Domain name (Empty for internal users)
+          type: string
+          nullable: true
+        description:
+          description: User description
+          type: string
+          nullable: true
+        email:
+          description: User e-mail
+          type: string
+          nullable: true
+        contactInfo:
+          description: User full contact information
+          type: string
+          nullable: true
+        isEnabled:
+          description: Is user account enabled
+          type: boolean
+        isTemporarilyLocked:
+          description:  Is user temporarily locked due to failed login attempts
+          type: boolean
+        hasPasswordExpired:
+          description:  Has the user's password expired
+          type: boolean
+        isImplicit:
+          description:  Is this an external user that was not explicitly mapped
+          type: boolean
+        displayName:
+          description:  |
+            The text to use when showing or displaying the user's identity to an end-user
+
+            consists of the domain name and the full user name. If the user's full name is empty or absent, it uses domain name and name.
+          type: string
+          nullable: true
+          readOnly: true
+        externalId:
+          description: External Id (Empty for internal users).
+          type: string
+          nullable: true
+          readOnly: true
+      required:
+        - id
+        - name
+    PermissionInfo:
+      title: PermissionInfo
+      required:
+        - name
+        - key
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          format: int32
+          type: integer
+        name:
+          type: string
+        key:
+          type: string
+      example:
+        id: 14
+        name: Manage security
+        key: Security_Manage
+    Group:
+      title: Group
+      description: Group's detailed information.
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - name
+      properties:
+        id:
+          description: Group identifier.
+          type: integer
+          format: int32
+        globalId:
+          description: Group global identifier.
+          type: string
+          nullable: true
+        name:
+          description: Group name.
+          type: string
+        description:
+          description: Group description.
+          type: string
+          nullable: true
+        domain:
+          description: Domain name (Empty for internal groups).
+          type: string
+          nullable: true
+        externalId:
+          description: External Id (Empty for internal groups).
+          type: string
+          nullable: true
+        isReadonly:
+          description: Is group readonly.
+          type: boolean
+        isExternal:
+          description: Is group external.
+          type: boolean
+    AddOrRemoveObjects:
+      title: AddOrRemoveObjects
+      type: object
+      additionalProperties: false
+      properties:
+        addObjectIds:
+          description: Identifiers of objects to be added.
+          type: array
+          items:
+            type: integer
+            format: int32
+        removeObjectIds:
+          description: Identifiers of objects to be removed.
+          type: array
+          items:
+            type: integer
+            format: int32
+    Port:
+      description: Network port number.
+      type: integer
+      format: int32
+      minimum: 0
+      maximum: 65535
+    ObjectIdOrGlobalId:
+      title: ObjectIdOrGlobalId
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          description: Id or global id of object.
+          type: string
+    ObjectIdOrGlobalIdOrEmpty:
+      title: ObjectIdOrGlobalIdOrEmpty
+      description: |-
+        Identifier of an object (Id or GlobalId) or the empty string.
+        This type is only used in PATCH prototypes. The empty string 
+        is used to indicate that the reference to another object should 
+        be removed.
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          description: Id or GlobalId of object or empty string.
+          type: string
+    PrincipalIdOrGlobalId:
+      title: PrincipalIdOrGlobalId
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          description: Principal id or global id of object.
+          type: string
+    Principal:
+      description: A security principal, either a user or group
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: integer
+          minimum: 1
+        globalId:
+          allOf:
+            - $ref: 'common.yml#/components/schemas/GlobalId'
+          nullable: true
+        name:
+          type: string
+        domain:
+          description: Either internal (empty string) or a Windows domain
+          type: string
+        isGroup:
+          type: boolean
+    RoleDisplay:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          description: Local role identifier
+          type: integer
+          minimum: 1
+        globalId:
+          description: GlobalId for the role
+          type: string
+        name:
+          description: Role name. Must be unique, case insensitive.
+          type: string
+          maxLength: 50
+        description:
+          description: Describes what the role is used for.
+          type: string
+          maxLength: 1000
+          nullable: true
+        type:
+          $ref: 'common.yml#/components/schemas/RoleType'
+    RoleType:
+      type: string
+      description: |
+        Defined role types:
+        * administrative
+        * instrument
+        * project
+      example: administrative
+    RoleAssignment:
+      type: object
+      additionalProperties: false
+      properties:
+        principal:
+          $ref: 'common.yml#/components/schemas/Principal'
+        roles:
+          description: Array of roles.
+          type: array
+          items:
+            $ref: 'common.yml#/components/schemas/RoleDisplay'
+    RoleAssignmentPrototype:
+      type: object
+      additionalProperties: false
+      properties:
+        principal:
+          $ref: 'common.yml#/components/schemas/PrincipalIdOrGlobalId'
+        roles:
+          description: Array of role globalIds
+          type: array
+          items:
+            description: globalId for role
+            type: string
+    RoleAssignmentResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - roleAssignments
+        - totalCount
+      properties:
+        totalCount:
+          type: integer
+        roleAssignments:
+          type: array
+          items:
+            $ref: 'common.yml#/components/schemas/RoleAssignment'
+        permissionsSourceGlobalId:
+          description: |
+            When permissions are inherited, this is the globalId of the object permissions are inherited from. Otherwise, null.
+          type: string
+          nullable: true
+    RoleAssignmentsPatchPrototype:
+      type: object
+      description: Prototype for updating role assignments.
+      additionalProperties: false
+      properties:
+        roleAssignmentsToAdd:
+          description: Role assignments to add
+          type: array
+          items:
+            $ref: 'common.yml#/components/schemas/RoleAssignmentPrototype'
+          nullable: true
+        roleAssignmentsToRemove:
+          description: Role assignments to remove
+          type: array
+          items:
+            $ref: 'common.yml#/components/schemas/RoleAssignmentPrototype'
+          nullable: true
+        ignoreVisibilityErrors:
+          description: whether to return with an error if visibility error(s) occur or ignore such errors.
+          type: boolean
+        copyInheritedRoleAssignments:
+          description: whether the role assignments that are inherited should be copied to this object when inheritance is broken
+          type: boolean
+        resetInheritance:
+          description: whether to restore permission inheritance for this object
+          type: boolean
+    V2RoleAssignmentsPatchPrototype:
+      type: object
+      description: Prototype for updating role assignments.
+      additionalProperties: false
+      properties:
+        roleAssignmentsToAdd:
+          description: Role assignments to add. No more than 200 roles may be added to an object at a time.
+          type: array
+          items:
+            $ref: 'common.yml#/components/schemas/V2RoleAssignmentPrototype'
+          nullable: true
+        roleAssignmentsToRemove:
+          description: Role assignments to remove. No more than 200 roles may be removed from an object at a time.
+          type: array
+          items:
+            $ref: 'common.yml#/components/schemas/V2RoleAssignmentPrototype'
+          nullable: true
+        ignoreVisibilityErrors:
+          description: Whether to return with an error if visibility error(s) occur or ignore such errors.
+          type: boolean
+        copyInheritedRoleAssignments:
+          description: Whether the role assignments that are inherited should be copied to this object when inheritance is broken.
+          type: boolean
+        resetInheritance:
+          description: Whether to restore permission inherit
+          type: boolean
+    V2RoleAssignmentPrototype:
+      type: object
+      additionalProperties: false
+      required:
+      - principal
+      - roles
+      properties:
+        principal:
+          type: string
+          description: Principal globalId
+        roles:
+          description: Array of role globalIds
+          type: array
+          items:
+            description: Role globalId
+            type: string
+    Instrument:
+      description: V20 Instrument
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          $ref: 'common.yml#/components/schemas/InstrumentId'
+        globalId:
+          type: string
+          readOnly: true
+        name:
+          description: Name of the instrument
+          type: string
+          example: LC56
+        description:
+          description: Description of the instrument
+          type: string
+        createdBy:
+          description: User who created the instrument
+          type: string
+          example: jdoe
+        createdAt:
+          description: When the instrument was created
+          type: string
+          format: date-time
+          example: 2019-06-18T16:30:23Z
+        lastModifiedBy:
+          description: User who last modified the instrument
+          type: string
+        lastModifiedAt:
+          description: When the instrument was last modified, UTC
+          type: string
+          format: date-time
+        contact:
+          description: Name, phone or email of instrument owner
+          type: string
+          example: 408-123-4567
+        applicationKey:
+          description: Key for the application associated with the instrument
+          type: string
+          example: olcds
+        location:
+          description: Id of parent location
+          type: integer
+          format: int32
+          example: 57
+        locationGlobalId:
+          type: string
+          maxLength: 50
+          example: 319defb8-2124-4d71-acb4-353ea5fc8ec2
+          description: Global id of parent location
+        configured:
+          description: Whether the instrument is configured
+          type: boolean
+        lastConfiguredBy:
+          description: User who last configured the instrument
+          type: string
+          nullable: true
+          example: bsmith
+        lastConfiguredAt:
+          description: When the instrument was last configured
+          type: string
+          format: date-time
+          nullable: true
+          example: 2020-05-10T12:30:00Z
+        locked:
+          description: Whether the instrument is locked, preventing its use in data acquisition
+          type: boolean
+        state:
+          description: Status of the instrument hardware, provided by its driver. May be null.
+          allOf:
+            - $ref: 'common.yml#/components/schemas/InstrumentState'
+        softwareStatus:
+          description: Status of the software controlling the instrument. May be null.
+          type: string
+          nullable: true
+        runStatus:
+          description: Status information for the current run, if any. May be null.
+          allOf:
+            - $ref: 'common.yml#/components/schemas/RunStatus'
+        runQueue:
+          description: |
+            Information for the current run and/or queue of run items. If no information
+            on runs is available, the property will be null. Also, the child properties
+            of *runQueue* may either be null.
+          allOf:
+            - $ref: 'common.yml#/components/schemas/RunQueue'
+        driver:
+          description: Id for the instrument driver (type) of the instrument
+          type: integer
+          format: int32
+          example: 13
+        controller:
+          description: Id for the instrument controller for the instrument
+          type: integer
+          format: int32
+          nullable: true
+          example: 99
+        printer:
+          description: Id for the printer assigned to this instrument
+          type: integer
+          format: int32
+          nullable: true
+          example: 102
+        defaultProject:
+          description: Optional id for the default project to use with this instrument
+          type: integer
+          format: int32
+          nullable: true
+          example: 29
+        alwaysUseDefaultProject:
+          description: Whether the default project should always be used
+          type: boolean
+        userSelectedProject:
+          description: Project to use with this instrument that is specific to the current user
+          type: integer
+          format: int32
+          nullable: true
+          example: 30
+        attributes:
+          $ref: 'common.yml#/components/schemas/MixedDictionary'
+        permissions:
+          description: Array of keys for the permissions the current user has on this instrument
+          type: array
+          items:
+            type: string
+          example:
+            - Instrument_View
+            - Instrument_Run
+      required:
+        - id
+    InstrumentId:
+      description: Id of the instrument
+      type: integer
+      format: int32
+      minimum: 1
+      readOnly: true
+      example: 18
+    InstrumentState:
+      description: | 
+        V20 InstrumentState associated with V20 Instrument.
+        Most recently recorded state for the instrument, default is NotConnected.
+        Defined values are: NotConnected, Idle, Error, PreRun, Running, NotReady, MaintenanceDue, Sleep.
+      type: string
+      example: Idle
+    InstrumentStatus:
+      type: object
+      additionalProperties: false
+      properties:
+        instrumentId:
+          description: Id of the instrument
+          type: integer
+          format: int32
+          example: 1337
+        instrumentGlobalId:
+          description: GlobalId of the instrument
+          type: string
+          example: 65971350-fce4-41ef-b27c-ec6d088199a6
+        hardwareStatus:
+          description: |
+            Hardware status of the instrument. May be null.
+            Currently defined values are: NotConnected, Idle, Error, PreRun, Running, NotReady, MaintenanceDue, Sleep
+          type: string
+          nullable: true
+          example: Running
+        softwareStatus:
+          description: |
+            Software status of the instrument. May be null.
+            Currently defined values are: NotAvailable, Idle, Running, Paused, BeingEdited, BeingReviewed, WaitingForUserInput.
+          type: string
+          nullable: true
+          example: Paused
+        runStatus:
+          description: Status information of the current run, if any. May be null.
+          nullable: true
+          allOf:
+          - $ref: 'common.yml#/components/schemas/RunStatus'
+        runQueue:
+          description: |
+            Information for the current run item and/or queue of run items. If no information
+            on runs is available, the property may be null. Also, the child properties
+            of *runQueue* may either be null.
+          nullable: true
+          allOf:
+          - $ref: 'common.yml#/components/schemas/RunQueue'
+    RunStatus:
+      description: | 
+            V20 RunStatus associated with V20 Instrument.
+            Most recently recorded status for the current run on the instrument.
+      type: object
+      additionalProperties: false
+      properties:
+        currentRun:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 5
+        totalRuns:
+          type: integer
+          format: int32
+          minimum: 1
+          example: 4
+        currentRunElapsedSeconds:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 1
+        currentRunTotalSeconds:
+          type: integer
+          format: int32
+          minimum: 0
+          example: 2
+        samples:
+          type: array
+          nullable: true
+          items:
+            type: string
+          example: [SMP001, SMP002]
+    RunQueue:
+      description: | 
+            V20 RunQueue associated with V20 Instrument.
+            Most recently recorded run queue information for the instrument.
+      type: object
+      additionalProperties: false
+      properties:
+        currentRun:
+          nullable: true
+          allOf:
+            - $ref: 'common.yml#/components/schemas/RunInfo'
+        runs:
+          type: array
+          nullable: true
+          items:
+            $ref: 'common.yml#/components/schemas/RunInfo'
+    RunInfo:
+      description: | 
+        V20 RunInfo associated with V20 Instrument.
+        Most recently recorded run info information for the instrument.
+      type: object
+      additionalProperties: false
+      properties:
+        title:
+          description: Description of the run.
+          type: string
+          minLength: 1
+          example: "Some description"
+        user:
+          description: User who submitted the run
+          type: string
+          example: Administrator
+        runParameters:
+          description: Dictionary of parameter names and values, in either V2 or V3 format. Nested dictionaries not supported.
+          allOf:
+            - $ref: 'common.yml#/components/schemas/MixedDictionary'
+    MixedDictionary:
+      description: |
+        A collection of location specific properties.
+        Every property represents a key/value pair where key is a string and value is one of the following types:
+        * String
+        * Signed 32-bit integers
+        * Signed 64-bit integers (long type)
+        * Floating-point numbers with double precision
+        * Boolean
+        * MixedDictionary
+      type: object
+      additionalProperties:
+        type: object
+    NetworkLocation:
+      type: object
+      additionalProperties: false
+      required:
+      - port
+      properties:
+        ipAddress:
+          type: string
+        hostname:
+          type: string
+        port:
+          format: int32
+          type: integer
+    ApplicationId:
+      description: V10 ApplicationId
+      type: object
+      additionalProperties: false
+      properties:
+        appid:
+          description: It is either Application's id or unique key
+          type: string
+          minLength: 1
+    ApplicationPutPrototype:
+      type: object
+      description: Defines a prototype to update an application.
+      additionalProperties: false
+      required:
+      - name
+      - description
+      - attributes
+      - areProjectsSupported
+      - areInstrumentsControlled
+      properties:
+        areProjectsSupported:
+          type: boolean
+          description: Whether the application uses projects
+        areInstrumentsControlled:
+          type: boolean
+          description: Whether the application has instruments
+        attributes:
+          $ref: '#/components/schemas/MixedDictionary'
+        name:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          nullable: true
+          maxLength: 512
+    InstrumentDriver:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - parentId
+      - createdDate
+      - createdBy
+      - uniqueKey
+      properties:
+        uniqueKey:
+          type: string
+          description: Unique key that can be used to identify an instrument driver
+        applicationId:
+          type: integer
+          format: int32
+          nullable: true
+        smallIcon:
+          type: string
+          format: binary
+          description: Small icon encoded in Base64 string.
+          nullable: true
+        largeIcon:
+          type: string
+          format: binary
+          description: Large icon encoded in Base64 string.
+          nullable: true
+        attributes:
+          $ref: '#/components/schemas/MixedDictionary'
+        id:
+          type: integer
+          format: int32
+        parentId:
+          type: integer
+          format: int32
+        name:
+          type: string
+        description:
+          type: string
+        createdDate:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        modifiedDate:
+          type: string
+          format: date-time
+        lastModifiedBy:
+          type: string
+    InstrumentController:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - parentId
+      - createdDate
+      - createdBy
+      - canBeControlledRemotely
+      - networkLocation
+      properties:
+        comment:
+          type: string
+        location:
+          type: string
+        canBeControlledRemotely:
+          type: boolean
+          description: Can the instrument controller be controlled remotely
+        applicationId:
+          type: integer
+          format: int32
+          description: ID of the application associated with the instrument controller
+          nullable: true
+        installedDrivers:
+          type: array
+          description: List of IDs for the instrument drivers associated with the instrument controller
+          items:
+            type: integer
+            format: int32
+        networkLocation:
+          $ref: 'common.yml#/components/schemas/NetworkLocation'
+        attributes:
+          $ref: '#/components/schemas/MixedDictionary'
+        id:
+          type: integer
+          format: int32
+        parentId:
+          type: integer
+          format: int32
+        name:
+          type: string
+        description:
+          type: string
+        createdDate:
+          type: string
+          format: date-time
+        createdBy:
+          type: string
+        modifiedDate:
+          type: string
+          format: date-time
+        lastModifiedBy:
+          type: string
+    ApplicationResponse:
+      allOf:
+        - $ref: '#/components/schemas/Application'
+        - type: object
+          description: Application
+          additionalProperties: false
+          properties:
+            instrumentControllers:
+              type: array
+              description: List of Instrument Controllers
+              nullable: true
+              items:
+                $ref: '#/components/schemas/InstrumentController'
+            instrumentDrivers:
+              type: array
+              description: List of Instrument Drivers
+              nullable: true
+              items:
+                $ref: '#/components/schemas/InstrumentDriver'
+    Application:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      properties:
+        uniqueKey:
+          type: string
+          description: Unique string for the application
+        areProjectsSupported:
+          type: boolean
+          description: Whether the application uses projects
+        areInstrumentControlled:
+          type: boolean
+          description: Whether the application has instruments
+        etag:
+          type: string
+          description: ETag is used to detect optimistic locking failures.
+        permissionGroups:
+          type: array
+          description: List of permission groups containing the permissions added by this application
+          items:
+            $ref: 'common.yml#/components/schemas/ApplicationPermissionGroup'
+        orphanPermissions:
+          type: array
+          description: Permissions added by this application that do not have an associated permission group
+          items:
+            $ref: '#/components/schemas/ApplicationPermission'
+        attributes:
+          $ref: '#/components/schemas/MixedDictionary'
+        id:
+          type: integer
+          format: int32
+          readOnly: true
+        parentId:
+          type: integer
+          format: int32
+          readOnly: true
+        name:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        createdDate:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+        createdBy:
+          type: string
+          nullable: true
+          readOnly: true
+        modifiedDate:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+        lastModifiedBy:
+          type: string
+          nullable: true
+          readOnly: true
+    ApplicationPermissionGroup:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - permissions
+      properties:
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApplicationPermission'
+    ApplicationPermission:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - key
+      - name
+      - type
+      properties:
+        id:
+          type: integer
+          format: int32
+        key:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        groupId:
+          type: integer
+          format: int32
+          nullable: true
+          example: 1
+        type:
+          $ref: '#/components/schemas/PermissionType'
+    PermissionType:
+      type: string
+      description: |
+        List of possible permission types:
+        * administrative
+        * instrument
+        * project
+      example: administrative
+  responses:
+    Attachment:
+      content:
+        application/json:
+          schema:
+            $ref: 'common.yml#/components/schemas/Attachment'
+          examples:
+            textExample:
+              $ref: 'common.yml#/components/examples/TextAttachmentResponse'
+            int32Example:
+              $ref: 'common.yml#/components/examples/Int32AttachmentResponse'
+            doubleExample:
+              $ref: 'common.yml#/components/examples/DoubleAttachmentResponse'
+            dateTimeExample:
+              $ref: 'common.yml#/components/examples/DateTimeAttachmentResponse'
+            binaryExample:
+              $ref: 'common.yml#/components/examples/BinaryAttachmentResponse'
+            customTypeExample:
+              $ref: 'common.yml#/components/examples/CustomTypeAttachmentResponse'
+    Unauthenticated:
+      description: 401 Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: 'common.yml#/components/schemas/ApiError'
+          examples:
+            noTokenExample:
+              $ref: 'common.yml#/components/examples/NoTokenErrorResponse'
+            tokenEncodingExample:
+              $ref: 'common.yml#/components/examples/TokenEncodingErrorResponse'
+            tokenSignatureExample:
+              $ref: 'common.yml#/components/examples/TokenSignatureErrorResponse'
+            disabledAccountExample:
+              $ref: 'common.yml#/components/examples/DisabledAccountErrorResponse'
+            userNotMappedExample:
+              $ref: 'common.yml#/components/examples/UserNotMappedErrorResponse'
+    Unauthorized:
+      description: 403 Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: 'common.yml#/components/schemas/ApiError'
+          examples:
+            Forbidden:
+              value:
+                errorCode: Forbidden
+                error: Authorization was forbidden.
+    NotFound:
+      description: 404 NotFound
+      content:
+        application/json:
+          schema:
+            $ref: 'common.yml#/components/schemas/ApiError'
+          examples:
+            ObjectNotFound:
+              value:
+                errorCode: ObjectNotFound
+                error: Object was not found
+    Conflict:
+      description: 409 Conflict
+      content:
+        application/json:
+          schema:
+            $ref: 'common.yml#/components/schemas/ApiError'
+          examples:
+            response:
+              value:
+                errorCode: InvalidOperation
+                error: Exceeded number of instruments which has been limited by license.
+    UnsupportedMediaType:
+      description: 415 Unsupported media type
+      content:
+        application/json:
+          schema:
+            $ref: 'common.yml#/components/schemas/ApiError'
+          examples:
+            Unsupported:
+              value:
+                errorCode: UnsupportedMediaType
+                error: Payload is in a format not supported by this method
+    InternalServerError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: 'common.yml#/components/schemas/ApiError'
+          examples:
+            response:
+              value:
+                error: Could not complete request
+                errorCode: InternalServerError
+    ServiceUnavailable:
+      description: 3rdParty Service Unavailable
+      content:
+        application/json:
+          schema:
+            $ref: 'common.yml#/components/schemas/ApiError'
+          examples:
+            response:
+              value:
+                error: Storage service is unavailable
+                errorCode: StorageUnavailable
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: 'common.yml#/components/schemas/ApiError'
+          examples:
+            response:
+              value:
+                errorCode: InvalidParameter
+                error: Invalid parameter
+    PreconditionFailed:
+      description: 412 Precondition Failed.
+      content:
+        application/json:
+          schema:
+            $ref: 'common.yml#/components/schemas/ApiError'
+          examples:
+            Conflict:
+              value:
+                errorCode: InvalidOperation
+                error: "Changes have been made to the object since it was last retrieved by the client."
+    ApplicationConflictResponse:
+      description: 409 Conflict.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiError'
+          examples:
+            Conflict:
+              value:
+                errorCode: InvalidOperation
+                error: "An application with the specified unique key already exists."
+  examples:
+    TextAttachmentResponse:
+      summary: Text attachment response example
+      value:
+        type: 'System.String'
+        textData: 'text data'
+        lastModifiedBy: 'Admin'
+        lastModifiedAt: '2020-12-10T10:38:16.853535'
+    CustomTypeAttachmentResponse:
+      summary: Custom type attachment response example
+      value:
+        type: 'CustomType'
+        textData: 'Serialized data'
+        lastModifiedBy: 'Admin'
+        lastModifiedAt: '2020-12-10T10:38:16.853535'
+    Int32AttachmentResponse:
+      summary: Integer attachment response example
+      value:
+        type: 'System.Int32'
+        int: 10
+        lastModifiedBy: 'Admin'
+        lastModifiedAt: '2020-12-10T10:38:16.853535'
+    DoubleAttachmentResponse:
+      summary: Double attachment response example
+      value:
+        type: 'System.Double'
+        double: 10.5
+        lastModifiedBy: 'Admin'
+        lastModifiedAt: '2020-12-10T10:38:16.853535'
+    DateTimeAttachmentResponse:
+      summary: Date time attachment response example
+      value:
+        type: 'System.DateTime'
+        dateTime: '2020-12-10T10:38:16.853535'
+        lastModifiedBy: 'Admin'
+        lastModifiedAt: '2020-12-10T10:38:16.853535'
+    BinaryAttachmentResponse:
+      summary: Binary attachment response example
+      value:
+        type: 'System.Byte[]'
+        binary: 'AQIDBAU='
+        lastModifiedBy: 'Admin'
+        lastModifiedAt: '2020-12-10T10:38:16.853535'
+    DomainUserResponse:
+      value:
+        id: 10
+        name: Moe
+        fullName: Moe Howard
+        domain: Stooge
+        description: Bowl Cut
+        email: moe@stooge.org
+        contactInfo: Howard, Fine & Howard, LLP
+        isEnabled: true
+        isTemporarilyLocked: false
+        hasPasswordExpired: false
+        isImplicit: true
+    InternalUserResponse:
+      value:
+        id: 11
+        name: Joe
+        fullName: Joe Howard
+        description: Bowl Cut
+        email: joe@stooge.org
+        contactInfo: Howard, Fine & Howard, LLP
+        isEnabled: true
+        isTemporarilyLocked: false
+        hasPasswordExpired: false
+        isImplicit: false
+    NoTokenErrorResponse:
+      summary: Token is not passed.
+      value:
+        errorCode: BearerTokenNotProvided
+        error: No bearer access token was provided.
+    TokenEncodingErrorResponse:
+      summary: Token encoding is invalid.
+      value:
+        errorCode: InvalidToken
+        error: The access token was not correctly encoded.
+    TokenSignatureErrorResponse:
+      summary: Token signature is invalid.
+      value:
+        errorCode: InvalidTokenSignature
+        error: The access token signature was invalid.
+    DisabledAccountErrorResponse:
+      summary: Account is disabled.
+      value:
+        errorCode: UserIsDisabled
+        error: Account is disabled
+        localizedError: Account is disabled
+    UserNotMappedErrorResponse:
+      summary: User is not mapped.
+      value:
+        errorCode: UserNotMapped
+        error: User is not mapped.
+        localizedError: User is not mapped.
+    TextAttachmentRequest:
+      summary: Text attachment request example
+      value:
+        type: 'System.String'
+        textData: 'text data'
+    CustomTypeAttachmentRequest:
+      summary: Custom type attachment request example
+      value:
+        type: 'CustomType'
+        textData: 'Serialized data'
+    Int32AttachmentRequest:
+      summary: Integer attachment request example
+      value:
+        type: 'System.Int32'
+        int: 10
+    DoubleAttachmentRequest:
+      summary: Double attachment request example
+      value:
+        type: 'System.Double'
+        double: 10.5
+    DateTimeAttachmentRequest:
+      summary: Date time attachment request example
+      value:
+        type: 'System.DateTime'
+        dateTime: '2020-12-10T10:38:16.853535'
+    BinaryAttachmentRequest:
+      summary: Binary attachment request example
+      value:
+        type: 'System.Byte[]'
+        binary: 'AQIDBAU='
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: ticket or JWT
+      description: Authorization token for accessing the API. One can be obtained via the POST /login method or AIMS

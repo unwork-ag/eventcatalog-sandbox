@@ -1,0 +1,53 @@
+---
+id: GetApplicationNames
+version: 2.0.0
+name: GetApplicationNames
+summary: >-
+  Get unique application names from Activity Log entries to facilitate filtering
+  by application name.
+schemaPath: ''
+badges:
+  - content: GET
+    textColor: blue
+    backgroundColor: blue
+  - content: 'tag:ActivityLog'
+    textColor: blue
+    backgroundColor: blue
+owners:
+  - fw
+sidebar:
+  badge: GET
+---
+## Overview
+Only tokens with user identity (user token, user ticket) are authorized
+to retrieve application names. Others will result in Unauthorized (403).
+
+
+
+
+
+## GET `(/v2.0/activitylogentries/applications)`
+
+
+
+
+
+### Responses
+
+#### <span className="text-green-500">200 OK</span>
+<SchemaViewer file="response-200.json" maxHeight="500" id="response-200" />
+
+#### <span className="text-orange-500">401 Unauthorized</span>
+<SchemaViewer file="response-401.json" maxHeight="500" id="response-401" />
+
+#### <span className="text-orange-500">403 Forbidden</span>
+<SchemaViewer file="response-403.json" maxHeight="500" id="response-403" />
+
+#### <span className="text-red-500">503 Service Unavailable</span>
+<SchemaViewer file="response-503.json" maxHeight="500" id="response-503" />
+
+
+
+## Architecture
+
+<NodeGraph />

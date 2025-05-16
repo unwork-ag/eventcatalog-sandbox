@@ -1,0 +1,401 @@
+openapi: 3.0.0
+info:
+  title: OLSS ActivityLog API
+  description: OLSS ActivityLog REST API
+  version: 2.0.0
+security:
+  - BearerAuth: []
+paths:
+  /v2.0/activitylogentries:
+    get:
+      tags:
+        - ActivityLog
+      description: |
+        Search activity log entries matching the given criteria
+        Query may include reserved characters, which need to be URL-encoded: plus sign (+), and square brackets ([]).
+        Due to background indexing, new entries could take a few seconds before they appear in the search results.
+
+        The caller must have been granted ActivityLog_View permission in order to perform a search. Otherwise, 0
+        entries will be returned.
+      operationId: SearchActivityLog
+      parameters:
+        - name: offset
+          in: query
+          description: Number of entries to skip from the beginning of the response (does not affect `totalHits`).
+          schema:
+            minimum: 0
+            default: 0
+            type: integer
+            format: int32
+        - name: limit
+          in: query
+          description: Maximum number of entries to include in the response (does not affect `totalHits`).
+          schema:
+            minimum: 1
+            maximum: 1000
+            default: 50
+            type: integer
+            format: int32
+        - name: timestamp
+          in: query
+          description: |
+            Timestamp filter.
+            Only entries submitted in the given time frame are returned.
+            Format: `[DATETIME,DATETIME]`, where `DATETIME` is either `YYYY-MM-DDK`, `YYYY-MM-DDTHH:mm:ssK`, or `YYYY-MM-DDThh:mm:ss.fffK`.
+            Default value is a one-week range ending at the moment of the request.
+            Examples: `[2019-05-23Z,2019-05-30Z]`, `[2019-05-23T14:00:00+03:00,2019-05-23T23:00:00+03:00]`.
+          schema:
+            type: string
+        - name: userApplication
+          in: query
+          description: |
+            User-friendly name of an application (case-sensitive, exact match).
+            If specified, only entries submitted by the given application are returned.
+          schema:
+            type: string
+            maxLength: 50
+        - name: eventLevel
+          in: query
+          description: |
+            Event level filter (case-sensitive, exact match).
+            If specified, only entries with the given event level are returned.
+          schema:
+            type: string
+        - name: descriptionOrDetails
+          in: query
+          description: |
+            Description/details filter (case-insensitive, set of prefixes).
+            If specified, only entries containing words with all of the given prefixes in details or description are returned.
+            Exact definitions of "word" and "prefix" depend on the language of the value.
+            For example, filter by `"inst error"` will include `"Instrument error"` and `"Error during installation"`, but not `"Error during uninstallation"`.
+          schema:
+            type: string
+        - name: eventType
+          in: query
+          description: |
+            Event type filter (case-sensitive, exact match).
+            If specified, only entries with the given event type are returned.
+          schema:
+            type: string
+        - name: user
+          in: query
+          description: |
+            User filter (case-insensitive, set of prefixes).
+            If specified, only entries corresponding to the user with the given prefixes are returned.
+            Exact definition of "prefix" depends on the language of the value.
+            For example, filter by `"ja doe"` will include `"Jane Doe (MYCOMPANY\janedoe)"` and `"Doe, Jack (MYCOMPANY\jackdoe)"`, but not `"janedoe"`.
+          schema:
+            type: string
+        - name: sort
+          in: query
+          description: "Sorting of the results (case-sensitive column name, optionally prefixed with a direction: `+` for ascending, `-` for descending)."
+          schema:
+            type: string
+            default: "-timestamp"
+            example: "+timestamp"
+        - name: objectId
+          in: query
+          description: |
+            Object filter.
+            If specified, only entries corresponding to the object with the given ID are returned.
+          schema:
+            type: integer
+            format: int32
+        - name: onlyDeletedObjects
+          in: query
+          description: Filter by deleted objects. If `true`, only entries corresponding to the deleted objects are returned.
+          schema:
+            type: boolean
+        - name: appDataRef
+          in: query
+          description: |
+            Application data reference filter (case-insensitive, exact match).
+            If specified, only entries containing the application data reference are returned.
+          schema:
+            type: string
+        - name: reason
+          in: query
+          description: |
+            Reason filter (case-insensitive).
+            If specified, only entries with the given reason are returned.
+          schema:
+            type: string
+        - $ref: '../common.yml#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Search response (results and total hits)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ActivityLogSearchResponse'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '../common.yml#/components/schemas/ApiError'
+        '401':
+          $ref: '../common.yml#/components/responses/Unauthenticated'
+        '503':
+          $ref: '../common.yml#/components/responses/ServiceUnavailable'
+    post:
+      tags:
+        - ActivityLog
+      description: Creates a new activity log entry with the given details
+      operationId: PostActivityLog
+      requestBody:
+        x-name: activityLogEntry
+        description: The data to put in the activity log entry
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ActivityLogEntry'
+        required: true
+        x-position: 1
+      responses:
+        '200':
+          description: If the activity log is disabled, no activity log entry is created and OK is returned.
+        '201':
+          description: If the activity log is enabled and an entry is created successfully, Created is returned.
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '../common.yml#/components/schemas/ApiError'
+        '401':
+          description: 401 Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '../common.yml#/components/schemas/ApiError'
+              examples:
+                noTokenExample:
+                  $ref: '../common.yml#/components/examples/NoTokenErrorResponse'
+                tokenEncodingExample:
+                  $ref: '../common.yml#/components/examples/TokenEncodingErrorResponse'
+                tokenSignatureExample:
+                  $ref: '../common.yml#/components/examples/TokenSignatureErrorResponse'
+        '415':
+          description: 'Unsupported Media Type'
+        '503':
+          $ref: '../common.yml#/components/responses/ServiceUnavailable'
+  /v2.0/activitylogentries/applications:
+    get:
+      tags:
+        - ActivityLog
+      summary: Get unique application names from Activity Log entries to facilitate filtering by application name.
+      description: |
+        Only tokens with user identity (user token, user ticket) are authorized
+        to retrieve application names. Others will result in Unauthorized (403).
+      operationId: GetApplicationNames
+      responses:
+        '200':
+          description: Application names
+          content:
+            application/json:
+              schema:
+                type: object
+                title: ApplicationNamesResponse
+                additionalProperties: false
+                properties:
+                  applicationNames:
+                    type: array
+                    items:
+                      type: string
+                    example: ["Control Panel", "CDS"]
+        '401':
+          description: 401 Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '../common.yml#/components/schemas/ApiError'
+              examples:
+                noTokenExample:
+                  $ref: '../common.yml#/components/examples/NoTokenErrorResponse'
+                tokenEncodingExample:
+                  $ref: '../common.yml#/components/examples/TokenEncodingErrorResponse'
+                tokenSignatureExample:
+                  $ref: '../common.yml#/components/examples/TokenSignatureErrorResponse'
+        '403':
+          $ref: '../common.yml#/components/responses/Unauthorized'
+        '503':
+          $ref: '../common.yml#/components/responses/ServiceUnavailable'
+  /v2.0/eventtypesandlevels:
+    get:
+      tags:
+        - ActivityLog
+      summary: Return defined event types and event levels
+      description: |
+        Two important ways to filter Activity Log entries are by the type of
+        event represented by the entry, e.g. Instrument or Security, and the
+        level of the entry, e.g. Info or Error. This endpoint allows the
+        caller to retrieve keyword-displayname pairs for each type and level.
+        The caller supplies the culture info for the displaynames using the
+        Accept-Language header.
+
+        Keywords are used when creating or searching Activity Log entries.
+        Display names are presented to an end user in filter dialogs.
+
+        Only tokens with user identity (user token, user ticket) are authorized
+        to retrieve this content. Others will result in Unauthorized (403).
+      operationId: GetEventTypesAndLevels
+      parameters:
+        - $ref: '../common.yml#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: Event types and levels
+          content:
+            application/json:
+              schema:
+                type: object
+                title: EventTypesAndLevelsResponse
+                additionalProperties: false
+                properties:
+                  eventTypes:
+                      $ref: '#/components/schemas/KeywordDisplayNames'
+                  eventLevels:
+                      $ref: '#/components/schemas/KeywordDisplayNames'
+                example:
+                  eventTypes:
+                    Access: Acesso
+                    Configuration: Configuração
+                    General: Geral
+                    Instrument: Instrumento
+                    Security: Segurança
+                  eventLevels:
+                    Error: Erro
+                    Warning: Aviso
+                    Info: Info
+                    Normal: Normal
+        '401':
+          description: 401 Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '../common.yml#/components/schemas/ApiError'
+              examples:
+                noTokenExample:
+                  $ref: '../common.yml#/components/examples/NoTokenErrorResponse'
+                tokenEncodingExample:
+                  $ref: '../common.yml#/components/examples/TokenEncodingErrorResponse'
+                tokenSignatureExample:
+                  $ref: '../common.yml#/components/examples/TokenSignatureErrorResponse'
+        '403':
+          $ref: '../common.yml#/components/responses/Unauthorized'
+        '503':
+          $ref: '../common.yml#/components/responses/ServiceUnavailable'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: '../common.yml#/components/securitySchemes/BearerAuth'
+  schemas:
+    ActivityLogSearchResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        results:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/ActivityLogEntrySearchResult'
+        totalHits:
+          type: integer
+          format: int32
+        resultsLimitedByPermissions:
+          type: boolean
+          description: The flag indicates whether limitations in user permissions prevented seeing some or all Activity Log content.
+    ActivityLogEntrySearchResult:
+      allOf:
+        - $ref: '#/components/schemas/ActivityLogEntry'
+        - type: object
+          additionalProperties: false
+          properties:
+            id:
+              type: integer
+              format: int32
+              description: Activity log entry identifier.
+            timestamp:
+              type: string
+              format: date-time
+              description: This pseudo-property is of type DateTime and represents the time the activity log entry was created.
+            objectDeleted:
+              type: boolean
+              nullable: true
+              description: The flag indicates whether object was deleted or not.
+            user:
+              type: string
+              nullable: true
+              description: User who submitted the activity log entry.
+    ActivityLogEntry:
+      allOf:
+        - $ref: '#/components/schemas/ActivityLogModelBase'
+        - type: object
+          additionalProperties: false
+          required:
+            - description
+            - eventLevel
+            - eventType
+          properties:
+            applicationDataReference:
+              type: string
+              nullable: true
+              description: An optional JSON-formatted set of reference information that can be used to scope the activity log entry to specific objects/actions/files.
+            description:
+              type: string
+              minLength: 1
+              maximum: 450
+            details:
+              type: string
+              nullable: true
+              maximum: 2000
+              description: The full details of the activity log entry.
+            eventLevel:
+              type: string
+              description: The event level for the activity log entry. This can be Info, Warning or Error and is case sensitive.
+              example: Error
+            eventType:
+              type: string
+              description: The category or type to which the event relates. This can be Access, Configuration, General, Instrument and Security. This value is case sensitive.
+              example: Instrument
+            objectId:
+              type: integer
+              format: int32
+              nullable: true
+              description: Only applicable to actions made against Shared Services objects. This should be the Id of the Shared Services object that was interacted with.
+            sampleId:
+              type: string
+              nullable: true
+              maximum: 255
+              description: The ID for the sample. This field is also the appropriate place to provide the LIMS ID value (if applicable).
+            bufferingDelay:
+              type: string
+              nullable: true
+              description: Time difference between ActivityLog creation and sending it to server. (ISO 8601)
+              example: PT3H30M5S
+            reason:
+              type: string
+              nullable: true
+              maximum: 1024
+              description: The reason for the activity log entry.
+    ActivityLogModelBase:
+      type: object
+      additionalProperties: false
+      required:
+        - userApplication
+      properties:
+        userApplication:
+          type: string
+          minLength: 1
+          maximum: 50
+          description: The user-friendly name of the application.
+        clientDevice:
+          type: string
+          maximum: 50
+          description: The name of the device the application (or browser) is running on (whether computer or mobile device).
+    KeywordDisplayNames:
+      type: object
+      description: keyword-displayname pairs
+      additionalProperties:
+        type: string

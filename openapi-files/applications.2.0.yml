@@ -1,0 +1,306 @@
+openapi: 3.0.0
+info:
+  version: 2.0.0
+  title: OLSS Applications REST API
+  description: OLSS Applications REST API
+security:
+  - BearerAuth: []
+paths:
+  /v2.0/applications:
+    get:
+      tags:
+      - Applications
+      summary: Get all applications in the system
+      operationId: GetApplications
+      parameters:
+        - $ref: '#/components/parameters/Include'
+        - $ref: '../common.yml#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: List of applications
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationsResponse'
+        '400':
+          $ref: '../common.yml#/components/responses/BadRequest'
+        '401':
+          $ref: '../common.yml#/components/responses/Unauthenticated'
+        '500':
+          $ref: '../common.yml#/components/responses/InternalServerError'
+  /v2.0/applications/{appid}:
+    get:
+      tags:
+      - Applications
+      summary: Get the specified application
+      description: |
+        Get all or some parts of the specified application.
+
+        ##### Use Cases
+
+        1. Retrieve the permissions and permissionGroups for an application to see if new permissions need to be registered.
+        2. Retrieve the drivers for an application to see if a new driver needs to be registered.
+        3. Retrieve the properties for an application to determine when it was last updated.
+      operationId: GetApplicationById
+      parameters:
+        - $ref: '../common.yml#/components/parameters/ApplicationId'
+        - $ref: '#/components/parameters/Include'
+        - $ref: '../common.yml#/components/parameters/AcceptLanguage'
+      responses:
+        '200':
+          description: The specified application.
+          content:
+            application/json:
+              schema:
+                $ref: '../common.yml#/components/schemas/ApplicationResponse'
+          headers:
+            ETag:
+              description: Current ETag value for the application.
+              schema:
+                type: string
+        '400':
+          $ref: '../common.yml#/components/responses/BadRequest'
+        '401':
+          $ref: '../common.yml#/components/responses/Unauthenticated'
+        '404':
+          $ref: '../common.yml#/components/responses/NotFound'
+        '500':
+          $ref: '../common.yml#/components/responses/InternalServerError'
+    put:
+      tags:
+      - Applications
+      summary: "Updates the properties of an application."
+      description: |
+        This method is used to update the properties of an application. A calling user will need to
+        have been granted Security_Manage or Components_Manage permissions.
+
+        The caller must provide the last ETag it received for the application in
+        an IfMatch request header. The Etag returned from any of these methods may
+        be used.
+        1. GET /applications
+        2. GET /applications/`{id}`
+        3. POST /applications
+        4. PUT /applications/`{id}`
+        5. POST /applications/`{id}`/permissions
+        6. PATCH /applications/`{id}`/permissions/`{key}`
+        7. POST /applications/`{id}`/drivers
+
+        If the application has changed since the ETag was retrieved, a 412 status code will be returned.
+        The caller will need to retrieve the application again, update one or more properties,
+        and reattempt the call with the new prototype and ETag.
+
+        ##### Use Cases
+
+        1. Update the properties of an application.
+      operationId: UpdateApplication
+      parameters:
+        - $ref: '../common.yml#/components/parameters/ApplicationId'
+        - $ref: '../common.yml#/components/parameters/AcceptLanguage'
+        - $ref: '../common.yml#/components/parameters/IfMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '../common.yml#/components/schemas/ApplicationPutPrototype'
+      responses:
+        '200':
+          description: The application was updated.
+          content:
+            application/json:
+              schema:
+                $ref: '../common.yml#/components/schemas/ApplicationResponse'
+          headers:
+            ETag:
+              description: |-
+                Current ETag value for the application.
+              schema:
+                type: string
+        '400':
+          $ref: '../common.yml#/components/responses/BadRequest'
+        '401':
+          $ref: '../common.yml#/components/responses/Unauthenticated'
+        '403':
+          $ref: '../common.yml#/components/responses/Unauthorized'
+        '404':
+          $ref: '../common.yml#/components/responses/NotFound'
+        '409':
+          $ref: '../common.yml#/components/responses/ApplicationConflictResponse'
+        '412':
+          $ref: '../common.yml#/components/responses/PreconditionFailed'
+        '500':
+          $ref: '../common.yml#/components/responses/InternalServerError'
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: '../common.yml#/components/securitySchemes/BearerAuth'
+  schemas:
+    ApplicationsResponse:
+      type: object
+      description: Applications
+      additionalProperties: false
+      properties:
+        applications:
+          type: array
+          description: List of Applications
+          items:
+            $ref: '#/components/schemas/Application'
+        instrumentControllers:
+          type: array
+          description: List of Instrument Controllers
+          nullable: true
+          items:
+            $ref: '../common.yml#/components/schemas/InstrumentController'
+        instrumentDrivers:
+          type: array
+          description: List of Instrument Drivers
+          nullable: true
+          items:
+            $ref: '../common.yml#/components/schemas/InstrumentDriver'
+    Application:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      properties:
+        uniqueKey:
+          type: string
+          description: Unique string for the application
+        areProjectsSupported:
+          type: boolean
+          description: Whether the application uses projects
+        areInstrumentControlled:
+          type: boolean
+          description: Whether the application has instruments
+        etag:
+          type: string
+          description: ETag is used to detect optimistic locking failures.
+        permissionGroups:
+          type: array
+          description: List of permission groups containing the permissions added by this application
+          items:
+            $ref: '#/components/schemas/ApplicationPermissionGroup'
+        orphanPermissions:
+          type: array
+          description: Permissions added by this application that do not have an associated permission group
+          items:
+            $ref: '#/components/schemas/ApplicationPermission'
+        attributes:
+          $ref: '#/components/schemas/MixedDictionary'
+        id:
+          type: integer
+          format: int32
+          readOnly: true
+        parentId:
+          type: integer
+          format: int32
+          readOnly: true
+        name:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        createdDate:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+        createdBy:
+          type: string
+          nullable: true
+          readOnly: true
+        modifiedDate:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+        lastModifiedBy:
+          type: string
+          nullable: true
+          readOnly: true
+    ApplicationPermissionGroup:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - name
+      - permissions
+      properties:
+        id:
+          type: integer
+          format: int32
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApplicationPermission'
+    ApplicationPermission:
+      type: object
+      additionalProperties: false
+      required:
+      - id
+      - key
+      - name
+      - type
+      properties:
+        id:
+          type: integer
+          format: int32
+        key:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        groupId:
+          type: integer
+          format: int32
+          nullable: true
+          example: 1
+        type:
+          $ref: '../common.yml#/components/schemas/PermissionType'
+    MixedDictionary:
+      description: Additional properties. A collection of key/value pairs where key is always string and value can be any type.
+      type: object
+      additionalProperties:
+        type: object
+  parameters:
+    Include:
+      name: include
+      in: query
+      description:
+        Specifies which information should be included in the response.
+
+        Supported values (case-sensitive, comma-separated)
+        prop - the properties for the Application
+        perm -  the permissions defined for the Application, grouped by PermissionGroup
+        id - the instrument drivers defined for the Application
+        ic - the instrument controllers configured for the Application
+        *No extra spaces may be included in the comma-delimited string.*
+
+        All properties and related objects for each application are returned in the following cases
+        - Include parameter is empty;
+        - Include parameter is omitted;
+        - Include parameter is * character.
+      required: false
+      schema:
+        type: string
+      examples:
+        includeAll:
+          value: prop,perm,id,ic
+          summary: Include all properties and related objects for each application
+        includeAllUsingAsterisk:
+          value: "*"
+          summary: Include all properties and related objects for each application
+        includeOnlyPermissions:
+          value: perm
+          summary: Include only permissions configured for each application
+        includeInstrumentDriversAndControllers:
+          value: id,ic
+          summary: Include instrument drivers and instrument controllers configured for each application

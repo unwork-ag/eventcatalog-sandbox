@@ -26,43 +26,49 @@ export default {
       "@eventcatalog/generator-openapi",
       {
         services: [
-          { path: path.join(__dirname, "openapi-files", "product-api.yml"), id: 'product-service', owners: ['product-management'] },
+          {
+            path: [
+              path.join(__dirname, "openapi-files", "activityLog.1.0.yml"),
+              path.join(__dirname, "openapi-files", "activityLog.2.0.yml")
+            ],
+            id: 'activitylog-service',
+            owners: ['fw']
+          }
         ],
-        domain: { id: "products", name: "Products", version: "0.0.1" },
+        domain: { id: "activitylog", name: "ActivityLog", version: "0.0.1" },
+        preserveExistingMessages: false,
+        httpMethodsToMessages: {
+          GET: 'query',
+          PATCH: 'command',
+          POST: 'command',
+          PUT: 'command',
+          DELETE: 'command',
+        }        
       },
     ],
     [
       "@eventcatalog/generator-openapi",
       {
         services: [
-          { path: path.join(__dirname, "openapi-files", "order-api.yml"), id: 'order-service', owners: ['order-management'] },
-          { path: path.join(__dirname, "openapi-files", "order-history.yml"), id: 'order-history', owners: ['order-management'] },
+          { 
+            path: [
+              path.join(__dirname, "openapi-files", "applications.1.0.yml"),
+              path.join(__dirname, "openapi-files", "applications.2.0.yml")
+            ],
+            id: 'olss-applications-service', owners: ['fw'] 
+          },
         ],
-        domain: {
-          id: "order-management",
-          name: "Order management",
-          version: "0.0.1",
-        },
+        domain: { id: "applications", name: "Applications", version: "0.0.1" },
+        preserveExistingMessages: false,
+        httpMethodsToMessages: {
+          GET: 'query',
+          PATCH: 'command',
+          POST: 'command',
+          PUT: 'command',
+          DELETE: 'command',
+        }        
       },
-    ],
-    [
-      "@eventcatalog/generator-openapi",
-      {
-        services: [
-          { path: path.join(__dirname, "openapi-files", "payment-api.yml"), id: 'payment-service', owners: ['payment-management'] },
-        ],
-        domain: { id: "payment", name: "Payment", version: "0.0.1" },
-      },
-    ],
-    [
-      "@eventcatalog/generator-openapi",
-      {
-        services: [
-          { path: path.join(__dirname, "openapi-files", "file-api.yaml"), id: 'file-service', owners: ['payment-management'] },
-        ],
-        domain: { id: "payment", name: "Payment", version: "0.0.1" },
-      },
-    ],    
+    ],     
   ],
   docs: {
     sidebar: {
